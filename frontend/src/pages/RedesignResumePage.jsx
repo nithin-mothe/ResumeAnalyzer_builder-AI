@@ -27,7 +27,9 @@ function RedesignResumePage() {
     return saved ? JSON.parse(saved) : null;
   });
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [redesigning, setRedesigning] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState("");
 
   useEffect(() => {
     setResumeText(localStorage.getItem("latestResumeText") || "");
@@ -37,23 +39,36 @@ function RedesignResumePage() {
     localStorage.setItem("selectedTemplateId", selectedTemplate);
   }, [selectedTemplate]);
 
-  const handleUpload = async () => {
-    if (!file) {
+  const handleUpload = async (selectedFile = file) => {
+    if (!selectedFile) {
       setError("Choose your existing resume PDF first.");
       return;
     }
 
-    setLoading(true);
+    setUploading(true);
     setError("");
+    setUploadStatus("Parsing your current resume PDF...");
     try {
-      const data = await uploadResume(file);
+      const data = await uploadResume(selectedFile);
       setResumeText(data.text);
       localStorage.setItem("latestResumeText", data.text);
+      setUploadStatus("Current resume parsed. Add the company brief and redesign it.");
     } catch (uploadError) {
       setError(uploadError.message);
+      setUploadStatus("");
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
+  };
+
+  const handleFileChange = async (selectedFile) => {
+    setFile(selectedFile);
+    setResult(null);
+    if (!selectedFile) {
+      setUploadStatus("");
+      return;
+    }
+    await handleUpload(selectedFile);
   };
 
   const handleRedesign = async () => {
@@ -67,7 +82,7 @@ function RedesignResumePage() {
       return;
     }
 
-    setLoading(true);
+    setRedesigning(true);
     setError("");
 
     try {
@@ -91,7 +106,7 @@ function RedesignResumePage() {
     } catch (redesignError) {
       setError(redesignError.message);
     } finally {
-      setLoading(false);
+      setRedesigning(false);
     }
   };
 
@@ -125,11 +140,11 @@ function RedesignResumePage() {
         description="Paste your current resume, add the company name and what they want, and ResumeForge will rewrite the positioning into a sharper company-specific draft while keeping the content truthful."
         actions={
           <>
-            <button className="primary-button" onClick={handleRedesign} disabled={loading}>
-              {loading ? "Redesigning..." : "Redesign Resume"}
+            <button className="primary-button" onClick={handleRedesign} disabled={uploading || redesigning}>
+              {redesigning ? "Redesigning..." : "Redesign Resume"}
             </button>
-            <button className="secondary-button" onClick={handleUpload} disabled={loading}>
-              {loading ? "Parsing..." : "Upload Current Resume"}
+            <button className="secondary-button" onClick={() => handleUpload()} disabled={uploading || redesigning}>
+              {uploading ? "Parsing..." : "Parse Selected PDF Again"}
             </button>
           </>
         }
@@ -158,7 +173,14 @@ function RedesignResumePage() {
               <h2>Bring in the resume you already have</h2>
             </div>
           </div>
-          <FileUpload label="Current Resume PDF" onFileChange={setFile} fileName={file?.name} />
+          <FileUpload
+            label="Current Resume PDF"
+            onFileChange={handleFileChange}
+            fileName={file?.name}
+            helper="Choose a PDF and ResumeForge will parse it automatically."
+            statusMessage={uploadStatus}
+            statusTone={error ? "error" : uploading ? "info" : uploadStatus ? "success" : "default"}
+          />
           <label className="field">
             <span>Resume Text</span>
             <textarea
@@ -248,4 +270,3 @@ function RedesignResumePage() {
 }
 
 export default RedesignResumePage;
-

@@ -1,6 +1,13 @@
 import { useId } from "react";
 
-function FileUpload({ label, onFileChange, fileName, helper = "PDF only. Text-based resumes work best." }) {
+function FileUpload({
+  label,
+  onFileChange,
+  fileName,
+  helper = "PDF only. Text-based resumes work best.",
+  statusMessage = "",
+  statusTone = "default",
+}) {
   const inputId = useId();
 
   return (
@@ -20,6 +27,7 @@ function FileUpload({ label, onFileChange, fileName, helper = "PDF only. Text-ba
         onChange={(event) => onFileChange(event.target.files?.[0] || null)}
       />
       <span className="upload-meta">{helper}</span>
+      {statusMessage ? <span className={`upload-status upload-status--${statusTone}`}>{statusMessage}</span> : null}
     </div>
   );
 }

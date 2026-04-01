@@ -11,34 +11,49 @@ function ResumeAnalyzerPage() {
   const [resumeId, setResumeId] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState("");
 
   useEffect(() => {
     setResumeText(localStorage.getItem("latestResumeText") || "");
     setResumeId(localStorage.getItem("latestResumeId") || "");
   }, []);
 
-  const handleUpload = async () => {
-    if (!file) {
+  const handleUpload = async (selectedFile = file) => {
+    if (!selectedFile) {
       setError("Choose a PDF resume first.");
       return;
     }
 
-    setLoading(true);
+    setUploading(true);
     setError("");
+    setUploadStatus("Parsing your PDF and extracting the text...");
     try {
-      const data = await uploadResume(file);
+      const data = await uploadResume(selectedFile);
       setResumeText(data.text);
       setResumeId(data.saved_resume_id || "");
       localStorage.setItem("latestResumeText", data.text);
       if (data.saved_resume_id) {
         localStorage.setItem("latestResumeId", data.saved_resume_id);
       }
+      setUploadStatus("Resume parsed successfully. Review the text, then run analysis.");
     } catch (uploadError) {
       setError(uploadError.message);
+      setUploadStatus("");
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
+  };
+
+  const handleFileChange = async (selectedFile) => {
+    setFile(selectedFile);
+    setResult(null);
+    if (!selectedFile) {
+      setUploadStatus("");
+      return;
+    }
+    await handleUpload(selectedFile);
   };
 
   const handleAnalyze = async () => {
@@ -47,7 +62,7 @@ function ResumeAnalyzerPage() {
       return;
     }
 
-    setLoading(true);
+    setAnalyzing(true);
     setError("");
     try {
       const data = await analyzeResume({ resume_text: resumeText, resume_id: resumeId || null });
@@ -55,7 +70,7 @@ function ResumeAnalyzerPage() {
     } catch (analysisError) {
       setError(analysisError.message);
     } finally {
-      setLoading(false);
+      setAnalyzing(false);
     }
   };
 
@@ -67,11 +82,11 @@ function ResumeAnalyzerPage() {
         description="This page is built to be clear even for first-time users. Upload a PDF, parse the text, then run AI analysis to get structured strengths, problems, and concrete suggestions."
         actions={
           <>
-            <button className="primary-button" onClick={handleAnalyze} disabled={loading}>
-              {loading ? "Analyzing..." : "Analyze Resume"}
+            <button className="primary-button" onClick={handleAnalyze} disabled={uploading || analyzing}>
+              {analyzing ? "Analyzing..." : "Analyze Resume"}
             </button>
-            <button className="secondary-button" onClick={handleUpload} disabled={loading}>
-              {loading ? "Parsing..." : "Upload and Parse"}
+            <button className="secondary-button" onClick={() => handleUpload()} disabled={uploading || analyzing}>
+              {uploading ? "Parsing..." : "Parse Selected PDF Again"}
             </button>
           </>
         }
@@ -90,7 +105,14 @@ function ResumeAnalyzerPage() {
               <h2>Upload your resume PDF</h2>
             </div>
           </div>
-          <FileUpload label="Resume PDF" onFileChange={setFile} fileName={file?.name} />
+          <FileUpload
+            label="Resume PDF"
+            onFileChange={handleFileChange}
+            fileName={file?.name}
+            helper="Choose a PDF and ResumeForge will parse it automatically."
+            statusMessage={uploadStatus}
+            statusTone={error ? "error" : uploading ? "info" : uploadStatus ? "success" : "default"}
+          />
           <div className="info-strip">
             <span className="info-chip">PDF only</span>
             <span className="info-chip">Best with text-based resumes</span>
@@ -155,4 +177,3 @@ function ResumeAnalyzerPage() {
 }
 
 export default ResumeAnalyzerPage;
-

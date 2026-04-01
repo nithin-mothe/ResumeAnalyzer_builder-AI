@@ -543,6 +543,24 @@ h3 {
   color: var(--success);
 }
 
+.upload-status {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.upload-status--default,
+.upload-status--info {
+  color: var(--muted);
+}
+
+.upload-status--success {
+  color: var(--success);
+}
+
+.upload-status--error {
+  color: var(--danger);
+}
+
 .error-text,
 .page-error {
   color: var(--danger);

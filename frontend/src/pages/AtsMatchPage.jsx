@@ -13,29 +13,44 @@ function AtsMatchPage() {
   const [jobDescription, setJobDescription] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [matching, setMatching] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState("");
 
   useEffect(() => {
     setResumeText(localStorage.getItem("latestResumeText") || "");
   }, []);
 
-  const handleUpload = async () => {
-    if (!file) {
+  const handleUpload = async (selectedFile = file) => {
+    if (!selectedFile) {
       setError("Choose a PDF resume first.");
       return;
     }
 
-    setLoading(true);
+    setUploading(true);
     setError("");
+    setUploadStatus("Parsing your resume PDF...");
     try {
-      const data = await uploadResume(file);
+      const data = await uploadResume(selectedFile);
       setResumeText(data.text);
       localStorage.setItem("latestResumeText", data.text);
+      setUploadStatus("Resume parsed successfully. Add the target role details and run ATS Match.");
     } catch (uploadError) {
       setError(uploadError.message);
+      setUploadStatus("");
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
+  };
+
+  const handleFileChange = async (selectedFile) => {
+    setFile(selectedFile);
+    setResult(null);
+    if (!selectedFile) {
+      setUploadStatus("");
+      return;
+    }
+    await handleUpload(selectedFile);
   };
 
   const handleMatch = async () => {
@@ -49,7 +64,7 @@ function AtsMatchPage() {
       return;
     }
 
-    setLoading(true);
+    setMatching(true);
     setError("");
     try {
       const data = await atsMatchResume({
@@ -60,7 +75,7 @@ function AtsMatchPage() {
     } catch (matchError) {
       setError(matchError.message);
     } finally {
-      setLoading(false);
+      setMatching(false);
     }
   };
 
@@ -72,11 +87,11 @@ function AtsMatchPage() {
         description="Paste a full job description or even a short keyword list like `Python, pandas, numpy, FastAPI`. The page will normalize it and compare your resume in a beginner-friendly way."
         actions={
           <>
-            <button className="primary-button" onClick={handleMatch} disabled={loading}>
-              {loading ? "Matching..." : "Run ATS Match"}
+            <button className="primary-button" onClick={handleMatch} disabled={uploading || matching}>
+              {matching ? "Matching..." : "Run ATS Match"}
             </button>
-            <button className="secondary-button" onClick={handleUpload} disabled={loading}>
-              {loading ? "Parsing..." : "Upload and Parse"}
+            <button className="secondary-button" onClick={() => handleUpload()} disabled={uploading || matching}>
+              {uploading ? "Parsing..." : "Parse Selected PDF Again"}
             </button>
           </>
         }
@@ -95,7 +110,14 @@ function AtsMatchPage() {
               <h2>Bring in your current resume</h2>
             </div>
           </div>
-          <FileUpload label="Resume PDF" onFileChange={setFile} fileName={file?.name} />
+          <FileUpload
+            label="Resume PDF"
+            onFileChange={handleFileChange}
+            fileName={file?.name}
+            helper="Choose a PDF and ResumeForge will parse it automatically."
+            statusMessage={uploadStatus}
+            statusTone={error ? "error" : uploading ? "info" : uploadStatus ? "success" : "default"}
+          />
           <label className="field">
             <span>Resume Text</span>
             <textarea
