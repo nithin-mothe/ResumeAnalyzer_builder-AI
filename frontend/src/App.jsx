@@ -6,6 +6,7 @@ import AtsMatchPage from "./pages/AtsMatchPage";
 import AuthPage from "./pages/AuthPage";
 import Home from "./pages/Home";
 import JobTrackerPage from "./pages/JobTrackerPage";
+import ProfilePage from "./pages/ProfilePage";
 import RedesignResumePage from "./pages/RedesignResumePage";
 import ResumeAnalyzerPage from "./pages/ResumeAnalyzerPage";
 import ResumeBuilderPage from "./pages/ResumeBuilderPage";
@@ -44,6 +45,7 @@ function App() {
           <Route path="/redesign" element={<RedesignResumePage />} />
           <Route path="/chat" element={<ResumeChatPage />} />
           <Route path="/job-tracker" element={<JobTrackerPage />} />
+          <Route path="/profile" element={<ProfilePage session={session} />} />
           <Route path="/auth" element={<AuthPage session={session} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
