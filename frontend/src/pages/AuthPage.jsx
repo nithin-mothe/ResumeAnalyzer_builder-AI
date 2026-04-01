@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { isSupabaseConfigured, supabase, supabaseAnonKey, supabaseUrl } from "../lib/supabase";
+import { useEffect, useState } from "react";
+import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 function AuthPage({ session }) {
   const [mode, setMode] = useState("signin");
@@ -7,6 +7,21 @@ function AuthPage({ session }) {
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const redirectTo = `${window.location.origin}/auth`;
+
+  useEffect(() => {
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const queryParams = new URLSearchParams(window.location.search);
+    const authError =
+      hashParams.get("error_description") ||
+      hashParams.get("error") ||
+      queryParams.get("error_description") ||
+      queryParams.get("error");
+
+    if (authError) {
+      setError(authError.replace(/\+/g, " "));
+    }
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -25,13 +40,28 @@ function AuthPage({ session }) {
         }
         setStatus("Signed in successfully.");
       } else {
-        const { error: signUpError } = await supabase.auth.signUp({ email, password });
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: redirectTo,
+          },
+        });
         if (signUpError) {
           throw signUpError;
         }
-        setStatus("Account created. Check your inbox if email confirmation is enabled.");
+        if (data.session) {
+          setStatus("Account created and signed in successfully.");
+        } else {
+          setStatus("Account created. Check your inbox and confirm your email before signing in.");
+        }
       }
     } catch (authError) {
+      if (authError.message?.toLowerCase().includes("email not confirmed")) {
+        setError("Your email is not confirmed yet. Open the Supabase confirmation email, click the link, then sign in again.");
+        return;
+      }
+
       setError(authError.message);
     }
   };
@@ -45,33 +75,22 @@ function AuthPage({ session }) {
     setStatus("");
 
     try {
-      const response = await fetch(
-        `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(
-          `${window.location.origin}/auth`
-        )}&skip_http_redirect=true`,
-        {
-          headers: {
-            apikey: supabaseAnonKey,
-          },
-        }
-      );
+      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+        },
+      });
 
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(
-          payload?.msg || "Google sign-in is not enabled for this Supabase project yet."
-        );
+      if (oauthError) {
+        throw oauthError;
       }
 
-      if (!payload?.url) {
-        throw new Error("Google sign-in is not fully configured yet.");
+      if (data?.url) {
+        window.location.assign(data.url);
       }
-
-      window.location.assign(payload.url);
     } catch (authError) {
-      setError(
-        `${authError.message} Enable Google in Supabase Auth > Providers > Google, then add the site URL and redirect URL.`
-      );
+      setError(`${authError.message} Check Google provider setup and Supabase redirect URLs for the deployed domain.`);
     }
   };
 
@@ -100,8 +119,8 @@ function AuthPage({ session }) {
       <p className="eyebrow">Authentication</p>
       <h2>{mode === "signin" ? "Sign in faster and save your work" : "Create your account"}</h2>
       <p className="auth-card__copy">
-        Use email/password or continue with Google. For Google sign-in, make sure the provider is enabled in your
-        Supabase project.
+        Use email/password or continue with Google. Email signup in your current Supabase project requires confirming
+        the inbox link before password sign-in will work.
       </p>
 
       <button className="oauth-button" type="button" onClick={handleGoogleAuth}>
