@@ -42,7 +42,7 @@ async def upload_resume(
     authorization: str | None = Header(default=None),
 ) -> ResumeUploadResponse:
     text, file_bytes = await resume_parser.parse_upload(file)
-    user_id = await database.resolve_user_id(authorization)
+    user_id = await database.resolve_user_id_if_possible(authorization)
 
     storage_path = None
     saved_resume_id = None
@@ -71,7 +71,7 @@ async def analyze_resume(
     authorization: str | None = Header(default=None),
 ) -> ResumeAnalysisResponse:
     result = await resume_analyzer.analyze(payload.resume_text)
-    user_id = await database.resolve_user_id(authorization)
+    user_id = await database.resolve_user_id_if_possible(authorization)
 
     if user_id and payload.resume_id and database.enabled:
         await database.save_analysis(
@@ -96,7 +96,7 @@ async def build_ai_resume(
     authorization: str | None = Header(default=None),
 ) -> BuildResumeResponse:
     built_resume = await resume_builder.build(payload)
-    user_id = await database.resolve_user_id(authorization)
+    user_id = await database.resolve_user_id_if_possible(authorization)
 
     saved_resume_id = None
     if user_id and database.enabled:

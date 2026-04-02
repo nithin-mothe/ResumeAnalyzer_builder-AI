@@ -46,6 +46,14 @@ class DatabaseClient:
         payload = response.json()
         return payload.get("id")
 
+    async def resolve_user_id_if_possible(self, authorization_header: str | None) -> str | None:
+        try:
+            return await self.resolve_user_id(authorization_header)
+        except AppError as exc:
+            if exc.code in {"invalid_authorization", "missing_token", "invalid_token"}:
+                return None
+            raise
+
     async def save_resume(
         self,
         *,
@@ -134,4 +142,3 @@ class DatabaseClient:
                 "Supabase is not configured. Add SUPABASE_URL and SUPABASE_KEY to backend/.env.",
                 code="supabase_not_configured",
             )
-
