@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
-function AuthPage({ session }) {
+function AuthPage({ session, authReady }) {
+  const location = useLocation();
   const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const redirectTo = `${window.location.origin}/auth`;
+  const nextPath = location.state?.from?.pathname || "/profile";
 
   useEffect(() => {
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
@@ -21,6 +25,13 @@ function AuthPage({ session }) {
     if (authError) {
       setError(authError.replace(/\+/g, " "));
     }
+
+    const authCode = queryParams.get("code");
+    const accessToken = hashParams.get("access_token");
+
+    if (authCode || accessToken) {
+      setStatus("Authentication completed. Redirecting you into ResumeForge...");
+    }
   }, []);
 
   const handleSubmit = async (event) => {
@@ -29,6 +40,7 @@ function AuthPage({ session }) {
       return;
     }
 
+    setSubmitting(true);
     setError("");
     setStatus("");
 
@@ -38,7 +50,7 @@ function AuthPage({ session }) {
         if (signInError) {
           throw signInError;
         }
-        setStatus("Signed in successfully.");
+        setStatus("Signed in successfully. Redirecting...");
       } else {
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
@@ -51,7 +63,7 @@ function AuthPage({ session }) {
           throw signUpError;
         }
         if (data.session) {
-          setStatus("Account created and signed in successfully.");
+          setStatus("Account created and signed in successfully. Redirecting...");
         } else {
           setStatus("Account created. Check your inbox and confirm your email before signing in.");
         }
@@ -63,6 +75,8 @@ function AuthPage({ session }) {
       }
 
       setError(authError.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -71,6 +85,7 @@ function AuthPage({ session }) {
       return;
     }
 
+    setSubmitting(true);
     setError("");
     setStatus("");
 
@@ -91,6 +106,7 @@ function AuthPage({ session }) {
       }
     } catch (authError) {
       setError(`${authError.message} Check Google provider setup and Supabase redirect URLs for the deployed domain.`);
+      setSubmitting(false);
     }
   };
 
@@ -104,14 +120,18 @@ function AuthPage({ session }) {
     );
   }
 
-  if (session?.user) {
+  if (!authReady) {
     return (
       <section className="surface-card narrow-card auth-card">
         <p className="eyebrow">Authentication</p>
-        <h2>You are signed in</h2>
-        <p>{session.user.email}</p>
+        <h2>Checking your session</h2>
+        <p>Please wait while we finish restoring your sign-in.</p>
       </section>
     );
+  }
+
+  if (session?.user) {
+    return <Navigate to={nextPath} replace />;
   }
 
   return (
@@ -123,7 +143,7 @@ function AuthPage({ session }) {
         the inbox link before password sign-in will work.
       </p>
 
-      <button className="oauth-button" type="button" onClick={handleGoogleAuth}>
+      <button className="oauth-button" type="button" onClick={handleGoogleAuth} disabled={submitting}>
         Continue with Google
       </button>
 
@@ -140,13 +160,15 @@ function AuthPage({ session }) {
           <span>Password</span>
           <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
         </label>
-        <button className="primary-button" type="submit">
-          {mode === "signin" ? "Sign In" : "Create Account"}
+        <button className="primary-button" type="submit" disabled={submitting}>
+          {submitting ? "Please wait..." : mode === "signin" ? "Sign In" : "Create Account"}
         </button>
       </form>
 
       <button
         className="ghost-button"
+        type="button"
+        disabled={submitting}
         onClick={() => setMode((current) => (current === "signin" ? "signup" : "signin"))}
       >
         {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}

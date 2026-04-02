@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import { supabase } from "./lib/supabase";
 import AtsMatchPage from "./pages/AtsMatchPage";
@@ -14,20 +15,27 @@ import ResumeChatPage from "./pages/ResumeChatPage";
 
 function App() {
   const [session, setSession] = useState(null);
+  const [authReady, setAuthReady] = useState(!supabase);
 
   useEffect(() => {
     if (!supabase) {
       return undefined;
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+      })
+      .finally(() => {
+        setAuthReady(true);
+      });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
+      setAuthReady(true);
     });
 
     return () => subscription.unsubscribe();
@@ -45,11 +53,12 @@ function App() {
           <Route path="/redesign" element={<RedesignResumePage />} />
           <Route path="/chat" element={<ResumeChatPage />} />
           <Route path="/job-tracker" element={<JobTrackerPage />} />
-          <Route path="/profile" element={<ProfilePage session={session} />} />
-          <Route path="/auth" element={<AuthPage session={session} />} />
+          <Route path="/profile" element={<ProfilePage session={session} authReady={authReady} />} />
+          <Route path="/auth" element={<AuthPage session={session} authReady={authReady} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <Footer />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import PageHero from "../components/PageHero";
 import { supabase } from "../lib/supabase";
 import {
@@ -15,7 +15,8 @@ import {
   saveStoredProfile,
 } from "../utils/profile";
 
-function ProfilePage({ session }) {
+function ProfilePage({ session, authReady }) {
+  const location = useLocation();
   const user = session?.user || null;
   const [form, setForm] = useState(() => ({
     full_name: "",
@@ -48,8 +49,18 @@ function ProfilePage({ session }) {
     });
   }, [user]);
 
+  if (!authReady) {
+    return (
+      <section className="surface-card">
+        <p className="eyebrow">User Profile</p>
+        <h2>Loading your profile</h2>
+        <p>Please wait while we verify your session.</p>
+      </section>
+    );
+  }
+
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth" replace state={{ from: location }} />;
   }
 
   const handleChange = (event) => {
