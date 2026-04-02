@@ -42,6 +42,7 @@ npm run dev
 Create `frontend/.env` with `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY`.
 
 For Vercel production, set `VITE_API_BASE_URL` to the live Render backend URL so browser requests do not point at localhost.
+Set `VITE_AUTH_REDIRECT_ORIGIN` to `https://resumeforgeai.online` so OAuth always returns to the deployed auth page, even if sign-in starts from a local tab.
 
 ## Supabase Manual Setup
 
