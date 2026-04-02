@@ -36,6 +36,8 @@ function ResumeAnalyzerPage() {
       localStorage.setItem("latestResumeText", data.text);
       if (data.saved_resume_id) {
         localStorage.setItem("latestResumeId", data.saved_resume_id);
+      } else {
+        localStorage.removeItem("latestResumeId");
       }
       setUploadStatus("Resume parsed successfully. Review the text, then run analysis.");
     } catch (uploadError) {

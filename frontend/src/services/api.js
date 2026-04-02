@@ -41,7 +41,7 @@ function assertApiConfigured() {
 api.interceptors.request.use(async (config) => {
   assertApiConfigured();
 
-  if (!supabase) {
+  if (!config.requiresAuth || !supabase) {
     return config;
   }
 
@@ -144,6 +144,6 @@ export const generateResumePdf = async (resume, templateId = "executive") => {
 
 export const getResume = async (resumeId) => {
   await ensureBackendReady();
-  const { data } = await api.get(`/resume/${resumeId}`);
+  const { data } = await api.get(`/resume/${resumeId}`, { requiresAuth: true });
   return data;
 };
