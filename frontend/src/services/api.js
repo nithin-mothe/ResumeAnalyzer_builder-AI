@@ -3,15 +3,44 @@ import { supabase } from "../lib/supabase";
 
 const API_TIMEOUT_MS = 180000;
 const BACKEND_WAKE_WINDOW_MS = 5 * 60 * 1000;
+const LOCAL_FRONTEND_HOSTS = new Set(["localhost", "127.0.0.1"]);
+
+function getApiBaseUrl() {
+  const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+
+  if (configuredBaseUrl) {
+    return configuredBaseUrl.replace(/\/$/, "");
+  }
+
+  if (typeof window !== "undefined" && LOCAL_FRONTEND_HOSTS.has(window.location.hostname)) {
+    return "http://127.0.0.1:8000";
+  }
+
+  return null;
+}
+
+const apiBaseUrl = getApiBaseUrl();
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
+  baseURL: apiBaseUrl || undefined,
   timeout: API_TIMEOUT_MS,
 });
 
 let lastBackendReadyAt = 0;
 
+function assertApiConfigured() {
+  if (apiBaseUrl) {
+    return;
+  }
+
+  throw new Error(
+    "The frontend is missing VITE_API_BASE_URL for this deployment. Add your live backend URL in Vercel project settings and redeploy."
+  );
+}
+
 api.interceptors.request.use(async (config) => {
+  assertApiConfigured();
+
   if (!supabase) {
     return config;
   }
@@ -48,9 +77,7 @@ function getApiErrorMessage(error) {
 }
 
 async function ensureBackendReady() {
-  if (!api.defaults.baseURL?.startsWith("http")) {
-    return;
-  }
+  assertApiConfigured();
 
   const now = Date.now();
   if (now - lastBackendReadyAt < BACKEND_WAKE_WINDOW_MS) {

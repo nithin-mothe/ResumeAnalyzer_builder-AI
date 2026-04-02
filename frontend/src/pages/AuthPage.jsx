@@ -2,8 +2,17 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
-const LOCAL_AUTH_HOSTS = new Set(["localhost", "127.0.0.1"]);
-const DEFAULT_PRODUCTION_ORIGIN = "https://resumeforgeai.online";
+const CANONICAL_PUBLIC_ORIGIN = "https://www.resumeforgeai.online";
+
+function getAuthRedirectOrigin() {
+  const configuredOrigin = import.meta.env.VITE_AUTH_REDIRECT_ORIGIN?.trim();
+
+  if (configuredOrigin) {
+    return configuredOrigin.replace(/\/$/, "");
+  }
+
+  return CANONICAL_PUBLIC_ORIGIN;
+}
 
 function AuthPage({ session, authReady }) {
   const location = useLocation();
@@ -13,12 +22,7 @@ function AuthPage({ session, authReady }) {
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const configuredOrigin = import.meta.env.VITE_AUTH_REDIRECT_ORIGIN?.trim();
-  const authOrigin = configuredOrigin
-    ? configuredOrigin.replace(/\/$/, "")
-    : LOCAL_AUTH_HOSTS.has(window.location.hostname)
-      ? DEFAULT_PRODUCTION_ORIGIN
-      : window.location.origin;
+  const authOrigin = getAuthRedirectOrigin();
   const redirectTo = `${authOrigin}/auth`;
   const nextPath = location.state?.from?.pathname || "/profile";
 
