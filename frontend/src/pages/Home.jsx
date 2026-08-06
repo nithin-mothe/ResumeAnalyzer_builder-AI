@@ -16,7 +16,7 @@ const featureCards = [
   },
   {
     title: "Company Redesign",
-    description: "Tailor an existing resume to one company’s expectations without starting from scratch.",
+    description: "Tailor an existing resume to one company's expectations without starting from scratch.",
   },
   {
     title: "Resume Chat",

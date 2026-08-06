@@ -17,6 +17,7 @@ Production-oriented AI resume platform with a FastAPI backend, React + Vite fron
 - Resume chat assistant
 - PDF generation without system dependencies
 - Supabase-backed storage for resumes and analysis results
+- Supabase-backed job application tracking with local browser fallback
 - Auth-ready frontend with Supabase email/password login
 
 ## Backend Setup
@@ -53,3 +54,5 @@ Set `VITE_AUTH_REDIRECT_ORIGIN=https://www.resumeforgeai.online` so email confir
 4. Enable email/password auth.
 5. In Supabase Auth settings, add `https://www.resumeforgeai.online/auth` as the primary redirect URL and keep `https://resumeforgeai.online/auth` only if the apex domain may receive auth traffic before redirecting.
 6. In Supabase `Project Settings` -> `API`, copy the project URL into both frontend and backend config, use the publishable anon key in the frontend, and use the `service_role` key only in the backend.
+
+The schema includes `applications` for the Job Tracker. Re-run the SQL after pulling updates so signed-in users can sync application records across devices.

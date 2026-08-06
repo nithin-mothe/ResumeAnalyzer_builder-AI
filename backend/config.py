@@ -20,6 +20,11 @@ class Settings(BaseSettings):
         default_factory=lambda: DEFAULT_CORS_ORIGINS.copy()
     )
     storage_bucket: str = "resume-files"
+    upload_max_bytes: int = 5 * 1024 * 1024
+    upload_max_pages: int = 8
+    rate_limit_enabled: bool = True
+    rate_limit_requests: int = 90
+    rate_limit_window_seconds: int = 60
 
     model_config = SettingsConfigDict(
         env_file=".env",

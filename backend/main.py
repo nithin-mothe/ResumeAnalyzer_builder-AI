@@ -1,3 +1,4 @@
+from time import monotonic
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
@@ -14,6 +15,7 @@ from utils.errors import AppError
 
 settings = get_settings()
 app = FastAPI(title="AI Resume Platform", version="1.0.0")
+rate_limit_buckets: dict[str, list[float]] = {}
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,6 +24,42 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    if (
+        not settings.rate_limit_enabled
+        or request.method == "OPTIONS"
+        or request.url.path == "/health"
+    ):
+        return await call_next(request)
+
+    forwarded_for = request.headers.get("x-forwarded-for", "")
+    client_host = forwarded_for.split(",")[0].strip() or (request.client.host if request.client else "unknown")
+    now = monotonic()
+    window_start = now - settings.rate_limit_window_seconds
+    hits = [timestamp for timestamp in rate_limit_buckets.get(client_host, []) if timestamp >= window_start]
+
+    if len(hits) >= settings.rate_limit_requests:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "error": {
+                    "code": "rate_limit_exceeded",
+                    "message": "Too many requests. Please wait a moment and try again.",
+                    "details": {
+                        "window_seconds": settings.rate_limit_window_seconds,
+                        "limit": settings.rate_limit_requests,
+                    },
+                    "request_id": getattr(request.state, "request_id", None),
+                }
+            },
+        )
+
+    hits.append(now)
+    rate_limit_buckets[client_host] = hits
+    return await call_next(request)
 
 
 @app.middleware("http")
@@ -81,4 +119,3 @@ async def unhandled_exception_handler(request: Request, exc: Exception):  # prag
 app.include_router(health_router)
 app.include_router(resume_router)
 app.include_router(chat_router)
-

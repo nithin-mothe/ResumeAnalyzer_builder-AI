@@ -136,7 +136,7 @@ function RedesignResumePage() {
     <div className="stack page-stack">
       <PageHero
         eyebrow="Company Redesign"
-        title="Redesign an existing resume for one company’s exact hiring signals."
+        title="Redesign an existing resume for one company's exact hiring signals."
         description="Paste your current resume, add the company name and what they want, and ResumeForge will rewrite the positioning into a sharper company-specific draft while keeping the content truthful."
         actions={
           <>

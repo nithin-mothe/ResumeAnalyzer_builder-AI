@@ -75,6 +75,28 @@ class DatabaseClient:
         self._ensure_enabled()
         return await asyncio.to_thread(self._select_resume, resume_id, user_id)
 
+    async def list_applications(self, *, user_id: str) -> list[dict[str, Any]]:
+        self._ensure_enabled()
+        return await asyncio.to_thread(self._select_applications, user_id)
+
+    async def create_application(self, *, user_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        self._ensure_enabled()
+        return await asyncio.to_thread(self._insert_row, "applications", {**payload, "user_id": user_id})
+
+    async def update_application(
+        self,
+        *,
+        application_id: str,
+        user_id: str,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        self._ensure_enabled()
+        return await asyncio.to_thread(self._update_application, application_id, user_id, payload)
+
+    async def delete_application(self, *, application_id: str, user_id: str) -> None:
+        self._ensure_enabled()
+        await asyncio.to_thread(self._delete_application, application_id, user_id)
+
     async def save_analysis(
         self,
         *,
@@ -134,6 +156,42 @@ class DatabaseClient:
         if not response.data:
             raise AppError(404, "Resume not found.", code="resume_not_found")
         return response.data[0]
+
+    def _select_applications(self, user_id: str) -> list[dict[str, Any]]:
+        assert self.client is not None
+        response = (
+            self.client.table("applications")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return response.data or []
+
+    def _update_application(self, application_id: str, user_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        assert self.client is not None
+        response = (
+            self.client.table("applications")
+            .update(payload)
+            .eq("id", application_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if not response.data:
+            raise AppError(404, "Application not found.", code="application_not_found")
+        return response.data[0]
+
+    def _delete_application(self, application_id: str, user_id: str) -> None:
+        assert self.client is not None
+        response = (
+            self.client.table("applications")
+            .delete()
+            .eq("id", application_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if response.data is None:
+            raise AppError(404, "Application not found.", code="application_not_found")
 
     def _ensure_enabled(self) -> None:
         if not self.enabled:

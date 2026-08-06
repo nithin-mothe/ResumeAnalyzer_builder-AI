@@ -3,11 +3,15 @@ import asyncio
 import fitz
 from fastapi import UploadFile
 
+from config import Settings
 from utils.errors import AppError
 from utils.text import clean_text
 
 
 class ResumeParser:
+    def __init__(self, settings: Settings) -> None:
+        self.settings = settings
+
     async def parse_upload(self, upload: UploadFile) -> tuple[str, bytes]:
         filename = upload.filename or "resume.pdf"
         if not filename.lower().endswith(".pdf"):
@@ -19,6 +23,13 @@ class ResumeParser:
         file_bytes = await upload.read()
         if not file_bytes:
             raise AppError(400, "Uploaded file is empty.", code="empty_file")
+        if len(file_bytes) > self.settings.upload_max_bytes:
+            max_mb = self.settings.upload_max_bytes / (1024 * 1024)
+            raise AppError(
+                413,
+                f"Resume PDF is too large. Upload a file under {max_mb:.0f} MB.",
+                code="file_too_large",
+            )
 
         text = await asyncio.to_thread(self._extract_text, file_bytes)
         cleaned = clean_text(text)
@@ -34,9 +45,14 @@ class ResumeParser:
     def _extract_text(self, file_bytes: bytes) -> str:
         try:
             with fitz.open(stream=file_bytes, filetype="pdf") as document:
+                if document.page_count > self.settings.upload_max_pages:
+                    raise AppError(
+                        413,
+                        f"Resume PDF has too many pages. Upload {self.settings.upload_max_pages} pages or fewer.",
+                        code="too_many_pages",
+                    )
                 pages = [page.get_text("text") for page in document]
         except RuntimeError as exc:
             raise AppError(400, "Invalid or corrupted PDF document.", code="invalid_pdf") from exc
 
         return "\n".join(pages)
-

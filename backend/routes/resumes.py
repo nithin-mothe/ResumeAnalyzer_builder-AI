@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, Header, UploadFile
+from fastapi import APIRouter, File, Header, Response, UploadFile
 from fastapi.responses import StreamingResponse
 
 from ai_engine import GroqAIEngine
@@ -6,6 +6,9 @@ from ats_matcher import ATSMatcher
 from config import get_settings
 from database import DatabaseClient
 from models import (
+    ApplicationCreateRequest,
+    ApplicationResponse,
+    ApplicationUpdateRequest,
     ATSMatchRequest,
     ATSMatchResponse,
     BuildResumeRequest,
@@ -28,7 +31,7 @@ from utils.errors import AppError
 router = APIRouter(tags=["resumes"])
 settings = get_settings()
 ai_engine = GroqAIEngine(settings)
-resume_parser = ResumeParser()
+resume_parser = ResumeParser(settings)
 resume_analyzer = ResumeAnalyzer(ai_engine)
 ats_matcher = ATSMatcher()
 resume_builder = ResumeBuilder(ai_engine)
@@ -131,3 +134,61 @@ async def get_resume(resume_id: str, authorization: str | None = Header(default=
 
     resume = await database.get_resume(resume_id=resume_id, user_id=user_id)
     return SavedResumeResponse.model_validate(resume)
+
+
+@router.get("/applications", response_model=list[ApplicationResponse])
+async def list_applications(authorization: str | None = Header(default=None)) -> list[ApplicationResponse]:
+    user_id = await database.resolve_user_id(authorization)
+    if not user_id:
+        raise AppError(401, "You must be authenticated to load applications.", code="unauthorized")
+
+    applications = await database.list_applications(user_id=user_id)
+    return [ApplicationResponse.model_validate(application) for application in applications]
+
+
+@router.post("/applications", response_model=ApplicationResponse)
+async def create_application(
+    payload: ApplicationCreateRequest,
+    authorization: str | None = Header(default=None),
+) -> ApplicationResponse:
+    user_id = await database.resolve_user_id(authorization)
+    if not user_id:
+        raise AppError(401, "You must be authenticated to save applications.", code="unauthorized")
+
+    application = await database.create_application(user_id=user_id, payload=payload.model_dump())
+    return ApplicationResponse.model_validate(application)
+
+
+@router.patch("/applications/{application_id}", response_model=ApplicationResponse)
+async def update_application(
+    application_id: str,
+    payload: ApplicationUpdateRequest,
+    authorization: str | None = Header(default=None),
+) -> ApplicationResponse:
+    user_id = await database.resolve_user_id(authorization)
+    if not user_id:
+        raise AppError(401, "You must be authenticated to update applications.", code="unauthorized")
+
+    update_payload = payload.model_dump(exclude_unset=True)
+    if not update_payload:
+        raise AppError(400, "No application fields were provided for update.", code="empty_update")
+
+    application = await database.update_application(
+        application_id=application_id,
+        user_id=user_id,
+        payload=update_payload,
+    )
+    return ApplicationResponse.model_validate(application)
+
+
+@router.delete("/applications/{application_id}", status_code=204)
+async def delete_application(
+    application_id: str,
+    authorization: str | None = Header(default=None),
+) -> Response:
+    user_id = await database.resolve_user_id(authorization)
+    if not user_id:
+        raise AppError(401, "You must be authenticated to delete applications.", code="unauthorized")
+
+    await database.delete_application(application_id=application_id, user_id=user_id)
+    return Response(status_code=204)

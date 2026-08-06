@@ -179,3 +179,41 @@ class SavedResumeResponse(BaseModel):
     content: dict[str, Any]
     storage_path: str | None = None
     created_at: str
+
+
+ApplicationStatus = Literal["Wishlist", "Applied", "Interview", "Offer", "Rejected"]
+
+
+class ApplicationBase(BaseModel):
+    company: str = Field(min_length=2)
+    role: str = Field(min_length=2)
+    status: ApplicationStatus = "Wishlist"
+    link: str | None = None
+    applied_date: str | None = None
+    next_follow_up: str | None = None
+    notes: str | None = None
+
+    @field_validator("company", "role")
+    @classmethod
+    def validate_required_text(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("This field cannot be empty.")
+        return stripped
+
+
+class ApplicationCreateRequest(ApplicationBase):
+    pass
+
+
+class ApplicationUpdateRequest(BaseModel):
+    status: ApplicationStatus | None = None
+    link: str | None = None
+    applied_date: str | None = None
+    next_follow_up: str | None = None
+    notes: str | None = None
+
+
+class ApplicationResponse(ApplicationBase):
+    id: str
+    created_at: str

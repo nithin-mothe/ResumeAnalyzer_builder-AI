@@ -41,7 +41,7 @@ function assertApiConfigured() {
 api.interceptors.request.use(async (config) => {
   assertApiConfigured();
 
-  if (!config.requiresAuth || !supabase) {
+  if (!supabase) {
     return config;
   }
 
@@ -146,4 +146,27 @@ export const getResume = async (resumeId) => {
   await ensureBackendReady();
   const { data } = await api.get(`/resume/${resumeId}`, { requiresAuth: true });
   return data;
+};
+
+export const listApplications = async () => {
+  await ensureBackendReady();
+  const { data } = await api.get("/applications");
+  return data;
+};
+
+export const createApplication = async (application) => {
+  await ensureBackendReady();
+  const { data } = await api.post("/applications", application);
+  return data;
+};
+
+export const updateApplication = async (applicationId, patch) => {
+  await ensureBackendReady();
+  const { data } = await api.patch(`/applications/${applicationId}`, patch);
+  return data;
+};
+
+export const deleteApplication = async (applicationId) => {
+  await ensureBackendReady();
+  await api.delete(`/applications/${applicationId}`);
 };

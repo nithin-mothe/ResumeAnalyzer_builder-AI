@@ -1,21 +1,24 @@
 :root {
-  --bg: #f4ede2;
-  --bg-soft: #fbf7f1;
-  --surface: rgba(255, 252, 246, 0.9);
-  --surface-strong: #fffdf8;
-  --surface-dark: #143433;
-  --border: rgba(60, 43, 24, 0.1);
-  --border-strong: rgba(60, 43, 24, 0.18);
-  --text: #1f1712;
-  --muted: #6a594f;
-  --primary: #cf6a2e;
-  --primary-dark: #a34e1f;
-  --secondary: #1b5c69;
-  --secondary-soft: rgba(27, 92, 105, 0.1);
-  --success: #20755f;
-  --warning: #b2691b;
-  --danger: #a01d4a;
-  --shadow: 0 24px 60px rgba(41, 27, 15, 0.08);
+  --bg: #f6f8fb;
+  --bg-soft: #eef3f8;
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-strong: #ffffff;
+  --surface-dark: #10243f;
+  --border: rgba(15, 23, 42, 0.1);
+  --border-strong: rgba(15, 23, 42, 0.18);
+  --text: #111827;
+  --muted: #64748b;
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --secondary: #0f766e;
+  --secondary-soft: rgba(15, 118, 110, 0.1);
+  --success: #047857;
+  --warning: #b45309;
+  --danger: #be123c;
+  --shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --focus-ring: 0 0 0 4px rgba(37, 99, 235, 0.18);
 }
 
 * {
@@ -31,10 +34,7 @@ body {
   min-height: 100vh;
   color: var(--text);
   font-family: "Avenir Next", "Segoe UI", sans-serif;
-  background:
-    radial-gradient(circle at top left, rgba(228, 162, 86, 0.24), transparent 28%),
-    radial-gradient(circle at top right, rgba(27, 92, 105, 0.16), transparent 26%),
-    linear-gradient(180deg, #fffaf3 0%, #f3ebdf 100%);
+  background: linear-gradient(180deg, #fbfdff 0%, var(--bg) 48%, #edf2f7 100%);
 }
 
 a {
@@ -50,6 +50,11 @@ textarea {
 
 button {
   cursor: pointer;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 button:disabled {
@@ -83,9 +88,9 @@ textarea {
   width: min(1240px, 100%);
   margin: 0 auto;
   padding: 1rem 1.25rem;
-  border-radius: 22px;
-  border: 1px solid rgba(60, 43, 24, 0.08);
-  background: rgba(255, 248, 239, 0.82);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.78);
   color: var(--muted);
   text-align: center;
   font-size: 0.92rem;
@@ -109,8 +114,8 @@ textarea {
   gap: 1.5rem;
   padding: 1rem max(1rem, calc((100vw - 1240px) / 2 + 1rem));
   backdrop-filter: blur(18px);
-  background: rgba(255, 248, 239, 0.88);
-  border-bottom: 1px solid rgba(60, 43, 24, 0.08);
+  background: rgba(255, 255, 255, 0.86);
+  border-bottom: 1px solid var(--border);
 }
 
 .navbar__brand {
@@ -312,7 +317,7 @@ h5 {
 .feature-spotlight {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 28px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
 }
 
@@ -341,7 +346,7 @@ h5 {
   width: 220px;
   height: 220px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(207, 106, 46, 0.18), transparent 68%);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(15, 118, 110, 0.1));
   pointer-events: none;
 }
 
@@ -432,16 +437,16 @@ h3 {
 .ghost-button,
 .oauth-button {
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-md);
   padding: 0.9rem 1.25rem;
   transition: 160ms ease;
   font-weight: 600;
 }
 
 .primary-button {
-  background: linear-gradient(135deg, var(--primary) 0%, #e48a3c 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
   color: white;
-  box-shadow: 0 10px 22px rgba(207, 106, 46, 0.25);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.24);
 }
 
 .primary-button:hover,
@@ -454,7 +459,7 @@ h3 {
 }
 
 .secondary-button {
-  background: linear-gradient(135deg, rgba(27, 92, 105, 0.12), rgba(27, 92, 105, 0.04));
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(15, 118, 110, 0.04));
   color: var(--secondary);
 }
 
@@ -627,8 +632,8 @@ h3 {
 .chat-form textarea,
 .field-select {
   width: 100%;
-  border-radius: 18px;
-  border: 1px solid rgba(60, 43, 24, 0.12);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.9);
   color: var(--text);
   padding: 0.9rem 1rem;
@@ -640,8 +645,8 @@ h3 {
 .field textarea:focus,
 .chat-form textarea:focus,
 .field-select:focus {
-  border-color: rgba(207, 106, 46, 0.45);
-  box-shadow: 0 0 0 4px rgba(207, 106, 46, 0.08);
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: var(--focus-ring);
 }
 
 .form-grid {
@@ -1250,6 +1255,121 @@ h3 {
 .narrow-card {
   width: min(100%, 560px);
   margin: 0 auto;
+}
+
+.route-fallback {
+  display: grid;
+  min-height: 320px;
+  align-content: center;
+  gap: 1rem;
+}
+
+.skeleton-line,
+.skeleton-grid span {
+  display: block;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.18), rgba(148, 163, 184, 0.32), rgba(148, 163, 184, 0.18));
+  background-size: 220% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-line {
+  width: min(520px, 80%);
+  height: 24px;
+}
+
+.skeleton-line--wide {
+  width: min(760px, 92%);
+  height: 42px;
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.skeleton-grid span {
+  height: 96px;
+  border-radius: var(--radius-md);
+}
+
+.sync-pill {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 1rem;
+  padding: 0.48rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--primary);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 120% 0;
+  }
+
+  to {
+    background-position: -120% 0;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1220;
+    --bg-soft: #111827;
+    --surface: rgba(15, 23, 42, 0.86);
+    --surface-strong: #111827;
+    --surface-dark: #020617;
+    --border: rgba(148, 163, 184, 0.18);
+    --border-strong: rgba(148, 163, 184, 0.28);
+    --text: #e5edf7;
+    --muted: #9aa8bc;
+    --primary: #60a5fa;
+    --primary-dark: #3b82f6;
+    --secondary: #5eead4;
+    --secondary-soft: rgba(94, 234, 212, 0.12);
+    --success: #34d399;
+    --warning: #f59e0b;
+    --danger: #fb7185;
+    --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+    --focus-ring: 0 0 0 4px rgba(96, 165, 250, 0.22);
+  }
+
+  body {
+    background: linear-gradient(180deg, #08111f 0%, #0b1220 100%);
+  }
+
+  .navbar,
+  .site-footer__inner,
+  .mini-stat,
+  .builder-card,
+  .job-stat-card,
+  .job-card,
+  .starter-chip,
+  .oauth-button,
+  .profile-menu__link,
+  .profile-shortcut {
+    background: rgba(15, 23, 42, 0.86);
+  }
+
+  .field input,
+  .field textarea,
+  .chat-form textarea,
+  .field-select,
+  .resume-preview {
+    background: rgba(2, 6, 23, 0.72);
+    color: var(--text);
+  }
+
+  .resume-preview--modern,
+  .resume-preview--compact {
+    background: rgba(2, 6, 23, 0.72);
+  }
 }
 
 @media (max-width: 1120px) {

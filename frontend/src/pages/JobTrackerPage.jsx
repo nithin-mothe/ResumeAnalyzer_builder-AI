@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import PageHero from "../components/PageHero";
+import { supabase } from "../lib/supabase";
+import {
+  createApplication,
+  deleteApplication,
+  listApplications,
+  updateApplication,
+} from "../services/api";
 
 const STORAGE_KEY = "resumeForgeJobTracker";
 
@@ -15,6 +22,29 @@ const emptyJob = {
   notes: "",
 };
 
+const toClientJob = (application) => ({
+  id: application.id,
+  company: application.company || "",
+  role: application.role || "",
+  status: application.status || "Wishlist",
+  link: application.link || "",
+  appliedDate: application.applied_date || "",
+  nextFollowUp: application.next_follow_up || "",
+  notes: application.notes || "",
+  createdAt: application.created_at,
+  synced: true,
+});
+
+const toApiApplication = (job) => ({
+  company: job.company,
+  role: job.role,
+  status: job.status,
+  link: job.link || null,
+  applied_date: job.appliedDate || null,
+  next_follow_up: job.nextFollowUp || null,
+  notes: job.notes || null,
+});
+
 function JobTrackerPage() {
   const [jobs, setJobs] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -22,10 +52,55 @@ function JobTrackerPage() {
   });
   const [form, setForm] = useState(emptyJob);
   const [filter, setFilter] = useState("All");
+  const [serverSync, setServerSync] = useState(false);
+  const [syncStatus, setSyncStatus] = useState("Local workspace");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
   }, [jobs]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadApplications = async () => {
+      if (!supabase) {
+        return;
+      }
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        return;
+      }
+
+      setSyncStatus("Syncing applications...");
+      try {
+        const applications = await listApplications();
+        if (!active) {
+          return;
+        }
+        setJobs(applications.map(toClientJob));
+        setServerSync(true);
+        setSyncStatus("Synced to your account");
+      } catch (loadError) {
+        if (!active) {
+          return;
+        }
+        setServerSync(false);
+        setSyncStatus("Using local fallback");
+        setError(loadError.message);
+      }
+    };
+
+    loadApplications();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const latestTarget = localStorage.getItem("latestJobTarget");
@@ -61,31 +136,72 @@ function JobTrackerPage() {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!form.company.trim() || !form.role.trim()) {
       return;
     }
 
-    setJobs((current) => [
-      {
-        id: crypto.randomUUID(),
-        ...form,
-        createdAt: new Date().toISOString(),
-      },
-      ...current,
-    ]);
-    setForm(emptyJob);
+    const localJob = {
+      id: crypto.randomUUID(),
+      ...form,
+      createdAt: new Date().toISOString(),
+      synced: false,
+    };
+
+    try {
+      if (serverSync) {
+        const saved = await createApplication(toApiApplication(form));
+        setJobs((current) => [toClientJob(saved), ...current]);
+      } else {
+        setJobs((current) => [localJob, ...current]);
+      }
+      setForm(emptyJob);
+      setError("");
+    } catch (saveError) {
+      setJobs((current) => [localJob, ...current]);
+      setServerSync(false);
+      setSyncStatus("Using local fallback");
+      setError(saveError.message);
+      setForm(emptyJob);
+    }
   };
 
-  const updateStatus = (jobId, status) => {
+  const updateStatus = async (jobId, status) => {
+    const previousJobs = jobs;
     setJobs((current) =>
       current.map((job) => (job.id === jobId ? { ...job, status } : job))
     );
+
+    if (!serverSync) {
+      return;
+    }
+
+    try {
+      const saved = await updateApplication(jobId, { status });
+      setJobs((current) => current.map((job) => (job.id === jobId ? toClientJob(saved) : job)));
+      setError("");
+    } catch (updateError) {
+      setJobs(previousJobs);
+      setError(updateError.message);
+    }
   };
 
-  const removeJob = (jobId) => {
+  const removeJob = async (jobId) => {
+    const previousJobs = jobs;
     setJobs((current) => current.filter((job) => job.id !== jobId));
+
+    if (!serverSync) {
+      return;
+    }
+
+    try {
+      await deleteApplication(jobId);
+      setError("");
+    } catch (deleteError) {
+      setJobs(previousJobs);
+      setError(deleteError.message);
+    }
   };
 
   return (
@@ -98,6 +214,7 @@ function JobTrackerPage() {
           { value: jobs.length, label: "Total applications" },
           { value: totals.Interview || 0, label: "Interviews" },
           { value: totals.Offer || 0, label: "Offers" },
+          { value: serverSync ? "Cloud" : "Local", label: "Storage" },
         ]}
       />
 
@@ -167,6 +284,8 @@ function JobTrackerPage() {
               <h2>Application pipeline snapshot</h2>
             </div>
           </div>
+          <p className="sync-pill" aria-live="polite">{syncStatus}</p>
+          {error ? <p className="error-text">{error}</p> : null}
           <div className="job-stats-grid">
             {statuses.map((status) => (
               <article key={status} className="job-stat-card">

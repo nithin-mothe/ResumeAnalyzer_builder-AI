@@ -25,8 +25,24 @@ create table if not exists public.analysis_results (
     created_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.applications (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references public.users(id) on delete cascade,
+    company text not null,
+    role text not null,
+    status text not null default 'Wishlist'
+        check (status in ('Wishlist', 'Applied', 'Interview', 'Offer', 'Rejected')),
+    link text,
+    applied_date date,
+    next_follow_up date,
+    notes text,
+    created_at timestamptz not null default timezone('utc', now())
+);
+
 create index if not exists resumes_user_id_idx on public.resumes(user_id);
 create index if not exists analysis_results_resume_id_idx on public.analysis_results(resume_id);
+create index if not exists applications_user_id_idx on public.applications(user_id);
+create index if not exists applications_status_idx on public.applications(status);
 
 create or replace function public.handle_new_user()
 returns trigger
@@ -51,6 +67,7 @@ for each row execute procedure public.handle_new_user();
 alter table public.users enable row level security;
 alter table public.resumes enable row level security;
 alter table public.analysis_results enable row level security;
+alter table public.applications enable row level security;
 
 drop policy if exists "users_select_own" on public.users;
 create policy "users_select_own" on public.users
@@ -89,6 +106,22 @@ for insert with check (
         where r.id = analysis_results.resume_id and r.user_id = auth.uid()
     )
 );
+
+drop policy if exists "applications_select_own" on public.applications;
+create policy "applications_select_own" on public.applications
+for select using (auth.uid() = user_id);
+
+drop policy if exists "applications_insert_own" on public.applications;
+create policy "applications_insert_own" on public.applications
+for insert with check (auth.uid() = user_id);
+
+drop policy if exists "applications_update_own" on public.applications;
+create policy "applications_update_own" on public.applications
+for update using (auth.uid() = user_id);
+
+drop policy if exists "applications_delete_own" on public.applications;
+create policy "applications_delete_own" on public.applications
+for delete using (auth.uid() = user_id);
 
 insert into storage.buckets (id, name, public)
 values ('resume-files', 'resume-files', false)
