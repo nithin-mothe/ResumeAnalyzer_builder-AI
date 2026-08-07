@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { FileUp, UploadCloud } from "lucide-react";
 
 function FileUpload({
   label,
@@ -14,7 +15,13 @@ function FileUpload({
     <div className="upload-card">
       <span className="upload-label">{label}</span>
       <label htmlFor={inputId} className="upload-dropzone">
-        <span className="upload-dropzone__button">Choose PDF</span>
+        <span className="upload-dropzone__icon" aria-hidden="true">
+          <UploadCloud size={24} />
+        </span>
+        <span className="upload-dropzone__button">
+          <FileUp size={17} aria-hidden="true" />
+          Choose PDF
+        </span>
         <span className="upload-dropzone__text">
           {fileName || "Select a resume PDF from your device"}
         </span>

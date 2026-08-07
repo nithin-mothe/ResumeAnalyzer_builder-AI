@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { BriefcaseBusiness, Cloud, Plus, Trash2 } from "lucide-react";
 import PageHero from "../components/PageHero";
 import { supabase } from "../lib/supabase";
 import {
@@ -273,6 +274,7 @@ function JobTrackerPage() {
             />
           </label>
           <button className="primary-button" type="submit">
+            <Plus size={18} aria-hidden="true" />
             Save Job
           </button>
         </form>
@@ -284,7 +286,10 @@ function JobTrackerPage() {
               <h2>Application pipeline snapshot</h2>
             </div>
           </div>
-          <p className="sync-pill" aria-live="polite">{syncStatus}</p>
+          <p className="sync-pill" aria-live="polite">
+            <Cloud size={15} aria-hidden="true" />
+            {syncStatus}
+          </p>
           {error ? <p className="error-text">{error}</p> : null}
           <div className="job-stats-grid">
             {statuses.map((status) => (
@@ -337,6 +342,7 @@ function JobTrackerPage() {
                           <p className="muted">{job.role}</p>
                         </div>
                         <button type="button" className="ghost-button" onClick={() => removeJob(job.id)}>
+                          <Trash2 size={16} aria-hidden="true" />
                           Remove
                         </button>
                       </div>
@@ -360,7 +366,10 @@ function JobTrackerPage() {
                     </article>
                   ))
               ) : (
-                <p className="muted">No roles in this stage yet.</p>
+                <p className="muted empty-stage">
+                  <BriefcaseBusiness size={17} aria-hidden="true" />
+                  No roles in this stage yet.
+                </p>
               )}
             </div>
           </article>

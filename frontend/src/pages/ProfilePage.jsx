@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { BriefcaseBusiness, FileText, MessageSquareText, Save, WandSparkles } from "lucide-react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import PageHero from "../components/PageHero";
 import { supabase } from "../lib/supabase";
@@ -121,6 +122,7 @@ function ProfilePage({ session, authReady }) {
               <h2>Set your account identity</h2>
             </div>
             <button className="primary-button" type="submit" disabled={saving}>
+              <Save size={18} aria-hidden="true" />
               {saving ? "Saving..." : "Save Profile"}
             </button>
           </div>
@@ -259,16 +261,16 @@ function ProfilePage({ session, authReady }) {
             </div>
             <div className="profile-link-grid">
               <Link className="profile-shortcut" to="/builder">
-                Resume Builder
+                <span><FileText size={17} aria-hidden="true" /> Resume Builder</span>
               </Link>
               <Link className="profile-shortcut" to="/redesign">
-                Company Redesign
+                <span><WandSparkles size={17} aria-hidden="true" /> Company Redesign</span>
               </Link>
               <Link className="profile-shortcut" to="/chat">
-                Resume Chat
+                <span><MessageSquareText size={17} aria-hidden="true" /> Resume Chat</span>
               </Link>
               <Link className="profile-shortcut" to="/job-tracker">
-                Job Tracker
+                <span><BriefcaseBusiness size={17} aria-hidden="true" /> Job Tracker</span>
               </Link>
             </div>
           </section>

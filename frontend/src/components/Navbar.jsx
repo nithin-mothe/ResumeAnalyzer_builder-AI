@@ -1,12 +1,36 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  BarChart3,
+  BriefcaseBusiness,
+  ChevronDown,
+  FileSearch,
+  FileText,
+  Flame,
+  LogOut,
+  Menu,
+  MessageSquareText,
+  UserRound,
+  WandSparkles,
+  X,
+} from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { getAvatarPresentation, getDisplayName, getProfileStats, getUserProfile } from "../utils/profile";
+
+const navItems = [
+  { to: "/analyzer", label: "Analyzer", Icon: FileSearch },
+  { to: "/ats-match", label: "ATS Match", Icon: BarChart3 },
+  { to: "/builder", label: "Builder", Icon: FileText },
+  { to: "/redesign", label: "Redesign", Icon: WandSparkles },
+  { to: "/chat", label: "Resume Chat", Icon: MessageSquareText },
+  { to: "/job-tracker", label: "Job Tracker", Icon: BriefcaseBusiness, badge: "AI" },
+];
 
 function Navbar({ session }) {
   const navigate = useNavigate();
   const menuRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const user = session?.user || null;
   const avatar = useMemo(() => getAvatarPresentation(user), [user]);
@@ -45,6 +69,7 @@ function Navbar({ session }) {
     }
     await supabase.auth.signOut();
     setMenuOpen(false);
+    setMobileOpen(false);
     navigate("/");
   };
 
@@ -52,17 +77,21 @@ function Navbar({ session }) {
     <header className="navbar">
       <div className="navbar__brand">
         <Link className="brand" to="/">
+          <span className="brand-mark" aria-hidden="true">
+            <Flame size={23} strokeWidth={2.4} />
+          </span>
           ResumeForge AI
         </Link>
         <span className="navbar__caption">AI resume analysis, ATS checks, smart templates, and career guidance</span>
       </div>
-      <nav className="nav-links">
-        <NavLink to="/analyzer">Analyzer</NavLink>
-        <NavLink to="/ats-match">ATS Match</NavLink>
-        <NavLink to="/builder">Builder</NavLink>
-        <NavLink to="/redesign">Redesign</NavLink>
-        <NavLink to="/chat">Resume Chat</NavLink>
-        <NavLink to="/job-tracker">Job Tracker</NavLink>
+      <nav className={`nav-links ${mobileOpen ? "nav-links--open" : ""}`} aria-label="Primary navigation">
+        {navItems.map(({ to, label, Icon, badge }) => (
+          <NavLink key={to} to={to} onClick={() => setMobileOpen(false)}>
+            <Icon size={17} aria-hidden="true" />
+            <span>{label}</span>
+            {badge ? <span className="nav-link__badge">{badge}</span> : null}
+          </NavLink>
+        ))}
       </nav>
       <div className="nav-auth">
         {user ? (
@@ -81,6 +110,7 @@ function Navbar({ session }) {
                 <strong>{getDisplayName(user)}</strong>
                 <small>{profile.headline || user.email}</small>
               </span>
+              <ChevronDown size={16} aria-hidden="true" />
             </button>
 
             {menuOpen ? (
@@ -117,16 +147,16 @@ function Navbar({ session }) {
 
                 <div className="nav-profile__actions">
                   <Link className="profile-menu__link" to="/profile" onClick={() => setMenuOpen(false)}>
-                    Open Profile
+                    <span><UserRound size={17} aria-hidden="true" /> Open Profile</span>
                   </Link>
                   <Link className="profile-menu__link" to="/builder" onClick={() => setMenuOpen(false)}>
-                    Resume Builder
+                    <span><FileText size={17} aria-hidden="true" /> Resume Builder</span>
                   </Link>
                   <Link className="profile-menu__link" to="/job-tracker" onClick={() => setMenuOpen(false)}>
-                    Job Tracker
+                    <span><BriefcaseBusiness size={17} aria-hidden="true" /> Job Tracker</span>
                   </Link>
                   <button className="profile-menu__logout" type="button" onClick={handleSignOut}>
-                    Sign out
+                    <span><LogOut size={17} aria-hidden="true" /> Sign out</span>
                   </button>
                 </div>
               </div>
@@ -134,10 +164,20 @@ function Navbar({ session }) {
           </div>
         ) : (
           <Link className="primary-button" to="/auth">
+            <UserRound size={17} aria-hidden="true" />
             Sign in
           </Link>
         )}
       </div>
+      <button
+        className="nav-toggle"
+        type="button"
+        onClick={() => setMobileOpen((current) => !current)}
+        aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+        aria-expanded={mobileOpen}
+      >
+        {mobileOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
+      </button>
     </header>
   );
 }

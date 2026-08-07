@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FileUp, SearchCheck } from "lucide-react";
 import FileUpload from "../components/FileUpload";
 import PageHero from "../components/PageHero";
 import ResultCard from "../components/ResultCard";
@@ -88,9 +89,11 @@ function AtsMatchPage() {
         actions={
           <>
             <button className="primary-button" onClick={handleMatch} disabled={uploading || matching}>
+              <SearchCheck size={18} aria-hidden="true" />
               {matching ? "Matching..." : "Run ATS Match"}
             </button>
             <button className="secondary-button" onClick={() => handleUpload()} disabled={uploading || matching}>
+              <FileUp size={18} aria-hidden="true" />
               {uploading ? "Parsing..." : "Parse Selected PDF Again"}
             </button>
           </>

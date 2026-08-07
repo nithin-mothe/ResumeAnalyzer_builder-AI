@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BriefcaseBusiness, Download, FileUp, MessageSquareText, WandSparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import FileUpload from "../components/FileUpload";
 import PageHero from "../components/PageHero";
@@ -141,9 +142,11 @@ function RedesignResumePage() {
         actions={
           <>
             <button className="primary-button" onClick={handleRedesign} disabled={uploading || redesigning}>
+              <WandSparkles size={18} aria-hidden="true" />
               {redesigning ? "Redesigning..." : "Redesign Resume"}
             </button>
             <button className="secondary-button" onClick={() => handleUpload()} disabled={uploading || redesigning}>
+              <FileUp size={18} aria-hidden="true" />
               {uploading ? "Parsing..." : "Parse Selected PDF Again"}
             </button>
           </>
@@ -248,9 +251,11 @@ function RedesignResumePage() {
               </div>
               <div className="inline-actions">
                 <button className="primary-button" type="button" onClick={handleDownload}>
+                  <Download size={18} aria-hidden="true" />
                   Download PDF
                 </button>
                 <Link className="secondary-button" to="/job-tracker">
+                  <BriefcaseBusiness size={18} aria-hidden="true" />
                   Track This Job
                 </Link>
               </div>
@@ -260,6 +265,7 @@ function RedesignResumePage() {
               tracker, refined in chat, or downloaded immediately.
             </p>
             <Link className="ghost-button" to="/chat">
+              <MessageSquareText size={18} aria-hidden="true" />
               Continue refining in Resume Chat
             </Link>
           </article>

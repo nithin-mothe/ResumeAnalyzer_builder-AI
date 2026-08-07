@@ -1,29 +1,45 @@
 import { Link } from "react-router-dom";
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  FileSearch,
+  FileText,
+  MessageSquareText,
+  SearchCheck,
+  Sparkles,
+  WandSparkles,
+} from "lucide-react";
 import PageHero from "../components/PageHero";
 
 const featureCards = [
   {
     title: "Resume Analyzer",
+    Icon: FileSearch,
     description: "Score your resume, catch weak spots, and get clear improvements without guessing what to fix.",
   },
   {
     title: "ATS Match Engine",
+    Icon: SearchCheck,
     description: "Paste a full job description or a short skill list and instantly see what you are matching or missing.",
   },
   {
     title: "Template Builder",
+    Icon: FileText,
     description: "Generate a polished, ATS-ready resume and preview it in multiple recruiter-friendly templates.",
   },
   {
     title: "Company Redesign",
+    Icon: WandSparkles,
     description: "Tailor an existing resume to one company's expectations without starting from scratch.",
   },
   {
     title: "Resume Chat",
+    Icon: MessageSquareText,
     description: "Work with the assistant like a conversation, refine drafts, and keep improving until the resume feels right.",
   },
   {
     title: "Job Tracker",
+    Icon: BriefcaseBusiness,
     description: "Track applications, follow-up dates, interview stages, and notes in one organized workflow.",
   },
 ];
@@ -47,9 +63,11 @@ function Home({ session }) {
         actions={
           <>
             <Link className="primary-button" to="/analyzer">
+              <Sparkles size={18} aria-hidden="true" />
               Start with Analyzer
             </Link>
             <Link className="secondary-button" to="/builder">
+              <FileText size={18} aria-hidden="true" />
               Open Resume Builder
             </Link>
           </>
@@ -91,13 +109,22 @@ function Home({ session }) {
       </section>
 
       <section className="feature-grid">
-        {featureCards.map((card) => (
-          <article key={card.title} className="surface-card feature-card">
-            <p className="eyebrow">Feature</p>
-            <h3>{card.title}</h3>
-            <p>{card.description}</p>
-          </article>
-        ))}
+        {featureCards.map((card) => {
+          const Icon = card.Icon;
+          return (
+            <article key={card.title} className="surface-card feature-card">
+              <span className="feature-card__icon" aria-hidden="true">
+                <Icon size={21} />
+              </span>
+              <p className="eyebrow">Feature</p>
+              <h3>{card.title}</h3>
+              <p>{card.description}</p>
+              <span className="feature-card__link">
+                Explore <ArrowRight size={15} aria-hidden="true" />
+              </span>
+            </article>
+          );
+        })}
       </section>
 
       <section className="surface-card workflow-card">

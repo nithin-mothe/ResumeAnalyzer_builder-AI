@@ -1,3 +1,4 @@
+import { BadgeCheck } from "lucide-react";
 import { resumeTemplates } from "../data/resumeTemplates";
 
 function TemplateSelector({ selectedId, onSelect, compact = false }) {
@@ -13,7 +14,10 @@ function TemplateSelector({ selectedId, onSelect, compact = false }) {
             onClick={() => onSelect(template.id)}
             style={{ "--template-accent": template.accent }}
           >
-            <span className="template-card__label">{template.shortLabel}</span>
+            <span className="template-card__label">
+              <BadgeCheck size={16} aria-hidden="true" />
+              {template.shortLabel}
+            </span>
             <h3>{template.name}</h3>
             <p>{template.description}</p>
             <span className="template-card__meta">{template.bestFor}</span>
@@ -25,4 +29,3 @@ function TemplateSelector({ selectedId, onSelect, compact = false }) {
 }
 
 export default TemplateSelector;
-

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Download, FileText, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import ChatWindow from "../components/ChatWindow";
 import PageHero from "../components/PageHero";
@@ -216,9 +217,11 @@ function ResumeChatPage() {
                 </div>
                 <div className="inline-actions">
                   <button className="primary-button" type="button" onClick={handleDownload}>
+                    <Download size={18} aria-hidden="true" />
                     Download Resume
                   </button>
                   <Link className="secondary-button" to="/builder">
+                    <FileText size={18} aria-hidden="true" />
                     Edit in Builder
                   </Link>
                 </div>
@@ -298,6 +301,7 @@ function ResumeChatPage() {
                 />
               </label>
               <button className="primary-button" type="button" onClick={handleGenerateFromChat} disabled={pending}>
+                <Sparkles size={18} aria-hidden="true" />
                 {pending ? "Working..." : "Generate Resume with AI"}
               </button>
               {error ? <p className="error-text">{error}</p> : null}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FileUp, Sparkles } from "lucide-react";
 import FileUpload from "../components/FileUpload";
 import PageHero from "../components/PageHero";
 import ResultCard from "../components/ResultCard";
@@ -85,9 +86,11 @@ function ResumeAnalyzerPage() {
         actions={
           <>
             <button className="primary-button" onClick={handleAnalyze} disabled={uploading || analyzing}>
+              <Sparkles size={18} aria-hidden="true" />
               {analyzing ? "Analyzing..." : "Analyze Resume"}
             </button>
             <button className="secondary-button" onClick={() => handleUpload()} disabled={uploading || analyzing}>
+              <FileUp size={18} aria-hidden="true" />
               {uploading ? "Parsing..." : "Parse Selected PDF Again"}
             </button>
           </>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { LogIn, Mail, UserPlus } from "lucide-react";
 import { Navigate, useLocation } from "react-router-dom";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
@@ -157,6 +158,7 @@ function AuthPage({ session, authReady }) {
       </p>
 
       <button className="oauth-button" type="button" onClick={handleGoogleAuth} disabled={submitting}>
+        <Mail size={18} aria-hidden="true" />
         Continue with Google
       </button>
 
@@ -174,6 +176,7 @@ function AuthPage({ session, authReady }) {
           <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
         </label>
         <button className="primary-button" type="submit" disabled={submitting}>
+          {mode === "signin" ? <LogIn size={18} aria-hidden="true" /> : <UserPlus size={18} aria-hidden="true" />}
           {submitting ? "Please wait..." : mode === "signin" ? "Sign In" : "Create Account"}
         </button>
       </form>

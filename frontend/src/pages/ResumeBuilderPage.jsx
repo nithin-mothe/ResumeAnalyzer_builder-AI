@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Download, MessageSquareText, Plus, Sparkles, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import PageHero from "../components/PageHero";
 import ResumePreview from "../components/ResumePreview";
@@ -219,6 +220,7 @@ function ResumeBuilderPage() {
               <h2>Fill your details</h2>
             </div>
             <button className="primary-button" type="submit" disabled={loading}>
+              <Sparkles size={18} aria-hidden="true" />
               {loading ? "Generating..." : "Generate Resume"}
             </button>
           </div>
@@ -322,6 +324,7 @@ function ResumeBuilderPage() {
             <div className="section-heading">
               <h3>Experience</h3>
               <button type="button" className="secondary-button" onClick={addExperience}>
+                <Plus size={17} aria-hidden="true" />
                 Add Experience
               </button>
             </div>
@@ -331,6 +334,7 @@ function ResumeBuilderPage() {
                   <strong>Experience #{index + 1}</strong>
                   {form.experience.length > 1 ? (
                     <button type="button" className="ghost-button" onClick={() => removeExperience(index)}>
+                      <Trash2 size={16} aria-hidden="true" />
                       Remove
                     </button>
                   ) : null}
@@ -362,6 +366,7 @@ function ResumeBuilderPage() {
             <div className="section-heading">
               <h3>Projects</h3>
               <button type="button" className="secondary-button" onClick={addProject}>
+                <Plus size={17} aria-hidden="true" />
                 Add Project
               </button>
             </div>
@@ -371,6 +376,7 @@ function ResumeBuilderPage() {
                   <strong>Project #{index + 1}</strong>
                   {form.projects.length > 1 ? (
                     <button type="button" className="ghost-button" onClick={() => removeProject(index)}>
+                      <Trash2 size={16} aria-hidden="true" />
                       Remove
                     </button>
                   ) : null}
@@ -428,9 +434,11 @@ function ResumeBuilderPage() {
               </div>
               <div className="inline-actions">
                 <button className="primary-button" type="button" onClick={handleDownloadPdf}>
+                  <Download size={18} aria-hidden="true" />
                   Download PDF
                 </button>
                 <Link className="secondary-button" to="/chat">
+                  <MessageSquareText size={18} aria-hidden="true" />
                   Continue in Resume Chat
                 </Link>
               </div>

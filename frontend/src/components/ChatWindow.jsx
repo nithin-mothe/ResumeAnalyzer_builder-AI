@@ -1,3 +1,5 @@
+import { SendHorizontal, Sparkles } from "lucide-react";
+
 function renderMessageContent(content) {
   return String(content || "")
     .split("\n")
@@ -27,6 +29,7 @@ function ChatWindow({
         <div className="starter-row">
           {starterPrompts.map((prompt) => (
             <button key={prompt} type="button" className="starter-chip" onClick={() => onStarterSelect(prompt)}>
+              <Sparkles size={15} aria-hidden="true" />
               {prompt}
             </button>
           ))}
@@ -53,6 +56,7 @@ function ChatWindow({
           placeholder="Ask about your resume, targeting, interview preparation, or ask the assistant to generate a draft."
         />
         <button type="submit" className="primary-button">
+          <SendHorizontal size={18} aria-hidden="true" />
           Send
         </button>
       </form>
