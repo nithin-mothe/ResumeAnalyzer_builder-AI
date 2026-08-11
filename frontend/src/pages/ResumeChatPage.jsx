@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Download, FileText, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import ChatWindow from "../components/ChatWindow";
+import { AiProcessingPanel, motionTokens, SuccessBurst } from "../components/MotionSystem";
 import PageHero from "../components/PageHero";
 import ResumePreview from "../components/ResumePreview";
 import TemplateSelector from "../components/TemplateSelector";
@@ -30,6 +32,7 @@ function ResumeChatPage() {
   const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
   const [generatedResume, setGeneratedResume] = useState(() => {
     const saved = localStorage.getItem("latestBuiltResume");
     return saved ? JSON.parse(saved) : null;
@@ -170,6 +173,8 @@ function ResumeChatPage() {
       return;
     }
 
+    setPdfGenerating(true);
+    setError("");
     try {
       const blob = await generateResumePdf(generatedResume, selectedTemplate);
       const url = window.URL.createObjectURL(blob);
@@ -180,6 +185,8 @@ function ResumeChatPage() {
       window.URL.revokeObjectURL(url);
     } catch (downloadError) {
       setError(downloadError.message);
+    } finally {
+      setPdfGenerating(false);
     }
   };
 
@@ -208,8 +215,16 @@ function ResumeChatPage() {
             onStarterSelect={setInputValue}
           />
 
+          <AnimatePresence>
           {generatedResume ? (
-            <section className="surface-card chat-generated-actions">
+            <motion.section
+              className="surface-card chat-generated-actions"
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={motionTokens.spring}
+            >
+              <SuccessBurst active />
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">Generated in Chat</p>
@@ -218,7 +233,7 @@ function ResumeChatPage() {
                 <div className="inline-actions">
                   <button className="primary-button" type="button" onClick={handleDownload}>
                     <Download size={18} aria-hidden="true" />
-                    Download Resume
+                    {pdfGenerating ? "Generating PDF..." : "Download Resume"}
                   </button>
                   <Link className="secondary-button" to="/builder">
                     <FileText size={18} aria-hidden="true" />
@@ -230,8 +245,9 @@ function ResumeChatPage() {
                 If you do not like the draft, keep chatting. Ask for a stronger summary, sharper bullets, or a more
                 senior tone and continue iterating.
               </p>
-            </section>
+            </motion.section>
           ) : null}
+          </AnimatePresence>
         </div>
 
         <aside className="chat-sidebar">
@@ -331,9 +347,28 @@ function ResumeChatPage() {
         </aside>
       </section>
 
-      {generatedResume ? (
-        <ResumePreview resume={generatedResume} templateId={selectedTemplate} title="Chat Draft Preview" />
-      ) : null}
+      <AnimatePresence>
+        {pdfGenerating ? (
+          <AiProcessingPanel
+            title="Preparing chat draft PDF"
+            stages={["Rendering template...", "Checking spacing...", "Preparing download...", "Finalizing PDF..."]}
+            tone="success"
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {generatedResume ? (
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={motionTokens.spring}
+          >
+            <ResumePreview resume={generatedResume} templateId={selectedTemplate} title="Chat Draft Preview" />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

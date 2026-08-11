@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   BarChart3,
   BriefcaseBusiness,
@@ -9,11 +10,13 @@ import {
   LogOut,
   Menu,
   MessageSquareText,
+  Sparkles,
   UserRound,
   WandSparkles,
   X,
 } from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { motionTokens, useMotionSettings } from "./MotionSystem";
 import { supabase } from "../lib/supabase";
 import { getAvatarPresentation, getDisplayName, getProfileStats, getUserProfile } from "../utils/profile";
 
@@ -31,6 +34,7 @@ function Navbar({ session }) {
   const menuRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { animationsEnabled, setAnimationsEnabled } = useMotionSettings();
 
   const user = session?.user || null;
   const avatar = useMemo(() => getAvatarPresentation(user), [user]);
@@ -74,34 +78,62 @@ function Navbar({ session }) {
   };
 
   return (
-    <header className="navbar">
+    <motion.header
+      className="navbar"
+      initial={{ y: -18, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ ...motionTokens.spring, delay: 0.04 }}
+    >
       <div className="navbar__brand">
         <Link className="brand" to="/">
-          <span className="brand-mark" aria-hidden="true">
+          <motion.span
+            className="brand-mark"
+            aria-hidden="true"
+            whileHover={{ rotate: -4, scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+          >
             <Flame size={23} strokeWidth={2.4} />
-          </span>
-          ResumeForge AI
+          </motion.span>
+          <span className="brand__text">ResumeForge AI</span>
         </Link>
         <span className="navbar__caption">AI resume analysis, ATS checks, smart templates, and career guidance</span>
       </div>
-      <nav className={`nav-links ${mobileOpen ? "nav-links--open" : ""}`} aria-label="Primary navigation">
+      <motion.nav className={`nav-links ${mobileOpen ? "nav-links--open" : ""}`} aria-label="Primary navigation" layout>
         {navItems.map(({ to, label, Icon, badge }) => (
           <NavLink key={to} to={to} onClick={() => setMobileOpen(false)}>
-            <Icon size={17} aria-hidden="true" />
-            <span>{label}</span>
-            {badge ? <span className="nav-link__badge">{badge}</span> : null}
+            {({ isActive }) => (
+              <>
+                {isActive ? <motion.span className="nav-active-pill" layoutId="nav-active-pill" /> : null}
+                <motion.span className="nav-link__content" whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
+                  <Icon size={17} aria-hidden="true" />
+                  <span>{label}</span>
+                  {badge ? <span className="nav-link__badge">{badge}</span> : null}
+                </motion.span>
+              </>
+            )}
           </NavLink>
         ))}
-      </nav>
+      </motion.nav>
       <div className="nav-auth">
+        <button
+          className={`nav-motion-toggle ${animationsEnabled ? "nav-motion-toggle--active" : ""}`}
+          type="button"
+          onClick={() => setAnimationsEnabled((current) => !current)}
+          aria-label={animationsEnabled ? "Disable animations" : "Enable animations"}
+          title={animationsEnabled ? "Disable animations" : "Enable animations"}
+        >
+          <Sparkles size={17} aria-hidden="true" />
+        </button>
         {user ? (
           <div className="nav-profile" ref={menuRef}>
-            <button
+            <motion.button
               className="nav-profile__trigger"
               type="button"
               onClick={() => setMenuOpen((current) => !current)}
               aria-expanded={menuOpen}
               aria-haspopup="menu"
+              whileHover={{ y: -1 }}
+              whileTap={{ scale: 0.98 }}
             >
               <span className="profile-avatar" style={avatar.style}>
                 {avatar.imageUrl ? <img src={avatar.imageUrl} alt={getDisplayName(user)} /> : <span>{avatar.initials}</span>}
@@ -111,10 +143,18 @@ function Navbar({ session }) {
                 <small>{profile.headline || user.email}</small>
               </span>
               <ChevronDown size={16} aria-hidden="true" />
-            </button>
+            </motion.button>
 
-            {menuOpen ? (
-              <div className="nav-profile__menu" role="menu">
+            <AnimatePresence>
+              {menuOpen ? (
+              <motion.div
+                className="nav-profile__menu"
+                role="menu"
+                initial={{ opacity: 0, y: -8, scale: 0.98, filter: "blur(8px)" }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -8, scale: 0.98, filter: "blur(8px)" }}
+                transition={motionTokens.spring}
+              >
                 <div className="nav-profile__menu-header">
                   <span className="profile-avatar profile-avatar--large" style={avatar.style}>
                     {avatar.imageUrl ? (
@@ -159,26 +199,30 @@ function Navbar({ session }) {
                     <span><LogOut size={17} aria-hidden="true" /> Sign out</span>
                   </button>
                 </div>
-              </div>
-            ) : null}
+              </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
         ) : (
-          <Link className="primary-button" to="/auth">
+          <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
+            <Link className="primary-button" to="/auth">
             <UserRound size={17} aria-hidden="true" />
-            Sign in
-          </Link>
+            <span className="nav-auth__label">Sign in</span>
+            </Link>
+          </motion.div>
         )}
       </div>
-      <button
+      <motion.button
         className="nav-toggle"
         type="button"
         onClick={() => setMobileOpen((current) => !current)}
         aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
         aria-expanded={mobileOpen}
+        whileTap={{ scale: 0.94 }}
       >
         {mobileOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
-      </button>
-    </header>
+      </motion.button>
+    </motion.header>
   );
 }
 

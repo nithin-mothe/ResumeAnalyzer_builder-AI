@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { BriefcaseBusiness, Cloud, Plus, Trash2 } from "lucide-react";
+import { itemVariants, listVariants, motionTokens } from "../components/MotionSystem";
 import PageHero from "../components/PageHero";
 import { supabase } from "../lib/supabase";
 import {
@@ -291,14 +293,14 @@ function JobTrackerPage() {
             {syncStatus}
           </p>
           {error ? <p className="error-text">{error}</p> : null}
-          <div className="job-stats-grid">
+          <motion.div className="job-stats-grid" variants={listVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
             {statuses.map((status) => (
-              <article key={status} className="job-stat-card">
+              <motion.article key={status} className="job-stat-card" variants={itemVariants} whileHover={{ y: -3 }}>
                 <strong>{totals[status] || 0}</strong>
                 <span>{status}</span>
-              </article>
+              </motion.article>
             ))}
-          </div>
+          </motion.div>
           <div className="filter-row">
             <button
               type="button"
@@ -321,21 +323,31 @@ function JobTrackerPage() {
         </section>
       </section>
 
-      <section className="job-board">
+      <motion.section className="job-board" layout>
         {statuses.map((status) => (
-          <article key={status} className="surface-card job-column">
+          <motion.article key={status} className="surface-card job-column" layout transition={motionTokens.spring}>
             <div className="section-heading">
               <div>
                 <p className="eyebrow">{status}</p>
                 <h3>{jobs.filter((job) => job.status === status).length} roles</h3>
               </div>
             </div>
-            <div className="job-list">
+            <motion.div className="job-list" layout>
               {visibleJobs.filter((job) => job.status === status).length ? (
-                visibleJobs
-                  .filter((job) => job.status === status)
-                  .map((job) => (
-                    <article key={job.id} className="job-card">
+                <AnimatePresence mode="popLayout">
+                  {visibleJobs
+                    .filter((job) => job.status === status)
+                    .map((job) => (
+                    <motion.article
+                      key={job.id}
+                      className="job-card"
+                      layout
+                      initial={{ opacity: 0, y: 18, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -14, scale: 0.97 }}
+                      whileHover={{ y: -4 }}
+                      transition={motionTokens.spring}
+                    >
                       <div className="builder-card__header">
                         <div>
                           <strong>{job.company}</strong>
@@ -347,6 +359,14 @@ function JobTrackerPage() {
                         </button>
                       </div>
                       <p className="helper-text">{job.notes || "No notes yet."}</p>
+                      <div className="job-timeline" aria-hidden="true">
+                        <motion.span
+                          animate={{
+                            width: `${((statuses.indexOf(job.status) + 1) / statuses.length) * 100}%`,
+                          }}
+                          transition={motionTokens.spring}
+                        />
+                      </div>
                       <div className="job-card__meta">
                         {job.appliedDate ? <span>Applied: {job.appliedDate}</span> : null}
                         {job.nextFollowUp ? <span>Follow-up: {job.nextFollowUp}</span> : null}
@@ -363,18 +383,24 @@ function JobTrackerPage() {
                           </button>
                         ))}
                       </div>
-                    </article>
-                  ))
+                    </motion.article>
+                  ))}
+                </AnimatePresence>
               ) : (
-                <p className="muted empty-stage">
+                <motion.p
+                  className="muted empty-stage"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={motionTokens.spring}
+                >
                   <BriefcaseBusiness size={17} aria-hidden="true" />
                   No roles in this stage yet.
-                </p>
+                </motion.p>
               )}
-            </div>
-          </article>
+            </motion.div>
+          </motion.article>
         ))}
-      </section>
+      </motion.section>
     </div>
   );
 }

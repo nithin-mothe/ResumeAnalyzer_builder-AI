@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { FileUp, Sparkles } from "lucide-react";
 import FileUpload from "../components/FileUpload";
+import { AiProcessingPanel, motionTokens, SuccessBurst } from "../components/MotionSystem";
 import PageHero from "../components/PageHero";
 import ResultCard from "../components/ResultCard";
 import ScoreGauge from "../components/ScoreGauge";
@@ -146,9 +148,33 @@ function ResumeAnalyzerPage() {
 
       {error ? <p className="error-text page-error">{error}</p> : null}
 
+      <AnimatePresence>
+        {analyzing ? (
+          <AiProcessingPanel
+            title="Analyzing resume intelligence"
+            stages={[
+              "Reading Resume...",
+              "Understanding Skills...",
+              "Scoring clarity...",
+              "Generating Suggestions...",
+              "Almost Done...",
+            ]}
+            tone="brain"
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
       {result ? (
-        <section className="analysis-dashboard">
+        <motion.section
+          className="analysis-dashboard"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          transition={motionTokens.spring}
+        >
           <article className="surface-card score-panel">
+            <SuccessBurst active={result.score >= 85} />
             <p className="eyebrow">Overall Score</p>
             <ScoreGauge label="Resume Score" score={result.score} />
             <p className="score-panel__copy">
@@ -175,8 +201,9 @@ function ResumeAnalyzerPage() {
             items={result.suggestions}
             tone="default"
           />
-        </section>
+        </motion.section>
       ) : null}
+      </AnimatePresence>
     </div>
   );
 }

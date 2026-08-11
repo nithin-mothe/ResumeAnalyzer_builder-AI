@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { LogIn, Mail, UserPlus } from "lucide-react";
 import { Navigate, useLocation } from "react-router-dom";
+import { AiProcessingPanel, motionTokens } from "../components/MotionSystem";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 const CANONICAL_PUBLIC_ORIGIN = "https://www.resumeforgeai.online";
@@ -126,17 +128,22 @@ function AuthPage({ session, authReady }) {
 
   if (!isSupabaseConfigured) {
     return (
-      <section className="surface-card narrow-card auth-card">
+      <motion.section className="surface-card narrow-card auth-card" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}>
         <p className="eyebrow">Authentication</p>
         <h2>Supabase frontend variables are missing</h2>
         <p>Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to `frontend/.env`.</p>
-      </section>
+      </motion.section>
     );
   }
 
   if (!authReady) {
     return (
       <section className="surface-card narrow-card auth-card">
+        <AiProcessingPanel
+          title="Checking authentication"
+          stages={["Reading session...", "Validating redirect...", "Preparing profile..."]}
+          compact
+        />
         <p className="eyebrow">Authentication</p>
         <h2>Checking your session</h2>
         <p>Please wait while we finish restoring your sign-in.</p>
@@ -149,7 +156,12 @@ function AuthPage({ session, authReady }) {
   }
 
   return (
-    <section className="surface-card narrow-card auth-card">
+    <motion.section
+      className="surface-card narrow-card auth-card"
+      initial={{ opacity: 0, y: 18, scale: 0.985 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={motionTokens.spring}
+    >
       <p className="eyebrow">Authentication</p>
       <h2>{mode === "signin" ? "Sign in faster and save your work" : "Create your account"}</h2>
       <p className="auth-card__copy">
@@ -192,7 +204,7 @@ function AuthPage({ session, authReady }) {
 
       {status ? <p className="success-text">{status}</p> : null}
       {error ? <p className="error-text">{error}</p> : null}
-    </section>
+    </motion.section>
   );
 }
 

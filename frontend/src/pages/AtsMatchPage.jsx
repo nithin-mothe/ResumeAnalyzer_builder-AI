@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { FileUp, SearchCheck } from "lucide-react";
 import FileUpload from "../components/FileUpload";
+import { AiProcessingPanel, motionTokens, SuccessBurst } from "../components/MotionSystem";
 import PageHero from "../components/PageHero";
 import ResultCard from "../components/ResultCard";
 import ScoreGauge from "../components/ScoreGauge";
@@ -156,9 +158,33 @@ function AtsMatchPage() {
 
       {error ? <p className="error-text page-error">{error}</p> : null}
 
+      <AnimatePresence>
+        {matching ? (
+          <AiProcessingPanel
+            title="Calculating ATS alignment"
+            stages={[
+              "Reading Resume...",
+              "Comparing Job Description...",
+              "Mapping keywords...",
+              "Calculating ATS...",
+              "Generating Suggestions...",
+            ]}
+            tone="scan"
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
       {result ? (
-        <section className="analysis-dashboard">
+        <motion.section
+          className="analysis-dashboard"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          transition={motionTokens.spring}
+        >
           <article className="surface-card score-panel">
+            <SuccessBurst active={result.match_score >= 85} />
             <p className="eyebrow">ATS Match Score</p>
             <ScoreGauge label="Match Score" score={result.match_score} />
             <p className="score-panel__copy">
@@ -174,8 +200,9 @@ function AtsMatchPage() {
             description="Use these actions to improve your chances before applying."
             items={result.recommendations}
           />
-        </section>
+        </motion.section>
       ) : null}
+      </AnimatePresence>
     </div>
   );
 }

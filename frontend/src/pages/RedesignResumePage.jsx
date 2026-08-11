@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { BriefcaseBusiness, Download, FileUp, MessageSquareText, WandSparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import FileUpload from "../components/FileUpload";
+import { AiProcessingPanel, motionTokens, SuccessBurst } from "../components/MotionSystem";
 import PageHero from "../components/PageHero";
 import ResumePreview from "../components/ResumePreview";
 import TemplateSelector from "../components/TemplateSelector";
@@ -30,6 +32,7 @@ function RedesignResumePage() {
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [redesigning, setRedesigning] = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("");
 
   useEffect(() => {
@@ -116,6 +119,8 @@ function RedesignResumePage() {
       return;
     }
 
+    setPdfGenerating(true);
+    setError("");
     try {
       const blob = await generateResumePdf(result, selectedTemplate);
       const url = window.URL.createObjectURL(blob);
@@ -126,6 +131,8 @@ function RedesignResumePage() {
       window.URL.revokeObjectURL(url);
     } catch (downloadError) {
       setError(downloadError.message);
+    } finally {
+      setPdfGenerating(false);
     }
   };
 
@@ -240,10 +247,41 @@ function RedesignResumePage() {
 
       {error ? <p className="error-text page-error">{error}</p> : null}
 
+      <AnimatePresence>
+        {redesigning ? (
+          <AiProcessingPanel
+            title="Tailoring resume to company signals"
+            stages={[
+              "Reading Resume...",
+              "Understanding company signals...",
+              "Comparing Job Description...",
+              "Optimizing Resume...",
+              "Almost Done...",
+            ]}
+            tone="brain"
+          />
+        ) : null}
+        {pdfGenerating ? (
+          <AiProcessingPanel
+            title="Rendering tailored PDF"
+            stages={["Rendering template...", "Preserving layout...", "Preparing download...", "Finalizing PDF..."]}
+            tone="success"
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
       {result ? (
-        <section className="builder-output-layout">
+        <motion.section
+          className="builder-output-layout"
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -14 }}
+          transition={motionTokens.spring}
+        >
           <ResumePreview resume={result} templateId={selectedTemplate} title="Company-Specific Resume Preview" />
           <article className="surface-card builder-editor-card">
+            <SuccessBurst active />
             <div className="section-heading">
               <div>
                 <p className="eyebrow">Next Step</p>
@@ -252,7 +290,7 @@ function RedesignResumePage() {
               <div className="inline-actions">
                 <button className="primary-button" type="button" onClick={handleDownload}>
                   <Download size={18} aria-hidden="true" />
-                  Download PDF
+                  {pdfGenerating ? "Generating PDF..." : "Download PDF"}
                 </button>
                 <Link className="secondary-button" to="/job-tracker">
                   <BriefcaseBusiness size={18} aria-hidden="true" />
@@ -269,8 +307,9 @@ function RedesignResumePage() {
               Continue refining in Resume Chat
             </Link>
           </article>
-        </section>
+        </motion.section>
       ) : null}
+      </AnimatePresence>
     </div>
   );
 }

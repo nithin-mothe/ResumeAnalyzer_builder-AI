@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { BriefcaseBusiness, FileText, MessageSquareText, Save, WandSparkles } from "lucide-react";
 import { Link, Navigate, useLocation } from "react-router-dom";
+import { AiProcessingPanel, motionTokens, SuccessBurst } from "../components/MotionSystem";
 import PageHero from "../components/PageHero";
 import { supabase } from "../lib/supabase";
 import {
@@ -53,6 +55,11 @@ function ProfilePage({ session, authReady }) {
   if (!authReady) {
     return (
       <section className="surface-card">
+        <AiProcessingPanel
+          title="Restoring profile workspace"
+          stages={["Checking session...", "Loading account...", "Preparing profile..."]}
+          compact
+        />
         <p className="eyebrow">User Profile</p>
         <h2>Loading your profile</h2>
         <p>Please wait while we verify your session.</p>
@@ -115,7 +122,14 @@ function ProfilePage({ session, authReady }) {
       />
 
       <section className="builder-main-layout">
-        <form className="surface-card builder-form-card" onSubmit={handleSave}>
+        <motion.form
+          className="surface-card builder-form-card"
+          onSubmit={handleSave}
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={motionTokens.spring}
+        >
+          <SuccessBurst active={Boolean(status)} />
           <div className="section-heading">
             <div>
               <p className="eyebrow">Profile Details</p>
@@ -180,7 +194,7 @@ function ProfilePage({ session, authReady }) {
 
           {status ? <p className="success-text">{status}</p> : null}
           {error ? <p className="error-text">{error}</p> : null}
-        </form>
+        </motion.form>
 
         <div className="builder-preview-column">
           <section className="surface-card profile-card">

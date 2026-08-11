@@ -1,3 +1,5 @@
+import { motion } from "framer-motion";
+import { itemVariants, listVariants, motionTokens } from "./MotionSystem";
 import { resumeTemplateMap } from "../data/resumeTemplates";
 
 function ResumePreview({ resume, templateId = "executive", title = "Resume Preview" }) {
@@ -11,7 +13,13 @@ function ResumePreview({ resume, templateId = "executive", title = "Resume Previ
   ].filter(Boolean);
 
   return (
-    <section className="preview-shell">
+    <motion.section
+      className="preview-shell"
+      initial={{ opacity: 0, y: 18, scale: 0.985 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.16 }}
+      transition={motionTokens.spring}
+    >
       <div className="preview-shell__header">
         <div>
           <p className="eyebrow">{title}</p>
@@ -22,41 +30,49 @@ function ResumePreview({ resume, templateId = "executive", title = "Resume Previ
         </span>
       </div>
 
-      <article className={`resume-preview resume-preview--${templateId}`}>
+      <motion.article
+        className={`resume-preview resume-preview--${templateId}`}
+        variants={listVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.16 }}
+        whileHover={{ y: -3 }}
+        transition={motionTokens.spring}
+      >
         <header className="resume-preview__header">
           <h2>{resume?.name}</h2>
           <p className="resume-preview__headline">{resume?.headline}</p>
           {contact.length ? <p className="resume-preview__contact">{contact.join(" | ")}</p> : null}
         </header>
 
-        <section className="resume-preview__section">
+        <motion.section className="resume-preview__section" variants={itemVariants}>
           <h4>Summary</h4>
           <p>{resume?.summary}</p>
-        </section>
+        </motion.section>
 
-        <section className="resume-preview__section">
+        <motion.section className="resume-preview__section" variants={itemVariants}>
           <h4>Skills</h4>
           <div className="skill-pill-row">
             {(resume?.skills?.languages || []).map((item) => (
-              <span key={`lang-${item}`} className="skill-pill">
+              <motion.span key={`lang-${item}`} className="skill-pill" whileHover={{ y: -2, scale: 1.03 }}>
                 {item}
-              </span>
+              </motion.span>
             ))}
             {(resume?.skills?.frameworks || []).map((item) => (
-              <span key={`framework-${item}`} className="skill-pill">
+              <motion.span key={`framework-${item}`} className="skill-pill" whileHover={{ y: -2, scale: 1.03 }}>
                 {item}
-              </span>
+              </motion.span>
             ))}
             {(resume?.skills?.tools || []).map((item) => (
-              <span key={`tool-${item}`} className="skill-pill">
+              <motion.span key={`tool-${item}`} className="skill-pill" whileHover={{ y: -2, scale: 1.03 }}>
                 {item}
-              </span>
+              </motion.span>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {!!resume?.experience?.length && (
-          <section className="resume-preview__section">
+          <motion.section className="resume-preview__section" variants={itemVariants}>
             <h4>Experience</h4>
             <div className="preview-item-list">
               {resume.experience.map((item, index) => (
@@ -70,11 +86,11 @@ function ResumePreview({ resume, templateId = "executive", title = "Resume Previ
                 </article>
               ))}
             </div>
-          </section>
+          </motion.section>
         )}
 
         {!!resume?.projects?.length && (
-          <section className="resume-preview__section">
+          <motion.section className="resume-preview__section" variants={itemVariants}>
             <h4>Projects</h4>
             <div className="preview-item-list">
               {resume.projects.map((item, index) => (
@@ -88,17 +104,16 @@ function ResumePreview({ resume, templateId = "executive", title = "Resume Previ
                 </article>
               ))}
             </div>
-          </section>
+          </motion.section>
         )}
 
-        <section className="resume-preview__section">
+        <motion.section className="resume-preview__section" variants={itemVariants}>
           <h4>Education</h4>
           <p>{resume?.education}</p>
-        </section>
-      </article>
-    </section>
+        </motion.section>
+      </motion.article>
+    </motion.section>
   );
 }
 
 export default ResumePreview;
-

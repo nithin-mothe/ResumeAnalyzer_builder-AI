@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Download, MessageSquareText, Plus, Sparkles, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { AiProcessingPanel, motionTokens, SuccessBurst } from "../components/MotionSystem";
 import PageHero from "../components/PageHero";
 import ResumePreview from "../components/ResumePreview";
 import TemplateSelector from "../components/TemplateSelector";
@@ -48,6 +50,20 @@ function ResumeBuilderPage() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
+
+  const builderProgress = useMemo(() => {
+    const requiredFields = [
+      form.name,
+      form.target_role,
+      form.summary,
+      form.education,
+      form.languages || form.frameworks || form.tools,
+      form.experience.some((item) => item.role || item.company || item.achievementsText),
+    ];
+    const completed = requiredFields.filter(Boolean).length;
+    return Math.round((completed / requiredFields.length) * 100);
+  }, [form]);
 
   useEffect(() => {
     localStorage.setItem("selectedTemplateId", selectedTemplate);
@@ -122,6 +138,8 @@ function ResumeBuilderPage() {
       return;
     }
 
+    setPdfGenerating(true);
+    setError("");
     try {
       const blob = await generateResumePdf(editableResume, selectedTemplate);
       const url = window.URL.createObjectURL(blob);
@@ -132,6 +150,8 @@ function ResumeBuilderPage() {
       window.URL.revokeObjectURL(url);
     } catch (downloadError) {
       setError(downloadError.message);
+    } finally {
+      setPdfGenerating(false);
     }
   };
 
@@ -201,6 +221,28 @@ function ResumeBuilderPage() {
           { value: editableResume?.experience?.length || 0, label: "Experience sections" },
         ]}
       />
+
+      <section className="motion-stepper" aria-label="Resume builder progress">
+        {[
+          { label: "Template", active: true, complete: Boolean(selectedTemplate) },
+          { label: "Profile", active: builderProgress > 0, complete: builderProgress >= 72 },
+          { label: "AI Draft", active: loading || Boolean(editableResume), complete: Boolean(editableResume) },
+        ].map((step, index) => (
+          <motion.article
+            key={step.label}
+            className={`motion-step ${step.active ? "motion-step--active" : ""} ${step.complete ? "motion-step--complete" : ""}`}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...motionTokens.spring, delay: index * 0.06 }}
+          >
+            <span>{index + 1}</span>
+            <strong>{step.label}</strong>
+          </motion.article>
+        ))}
+        <div className="motion-stepper__track" aria-hidden="true">
+          <motion.span animate={{ width: editableResume ? "100%" : `${Math.max(builderProgress, 12)}%` }} />
+        </div>
+      </section>
 
       <section className="surface-card">
         <div className="section-heading">
@@ -329,7 +371,7 @@ function ResumeBuilderPage() {
               </button>
             </div>
             {form.experience.map((item, index) => (
-              <div className="builder-card" key={`experience-${index}`}>
+              <motion.div className="builder-card" key={`experience-${index}`} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="builder-card__header">
                   <strong>Experience #{index + 1}</strong>
                   {form.experience.length > 1 ? (
@@ -358,7 +400,7 @@ function ResumeBuilderPage() {
                     placeholder="One achievement per line"
                   />
                 </label>
-              </div>
+              </motion.div>
             ))}
           </div>
 
@@ -371,7 +413,7 @@ function ResumeBuilderPage() {
               </button>
             </div>
             {form.projects.map((item, index) => (
-              <div className="builder-card" key={`project-${index}`}>
+              <motion.div className="builder-card" key={`project-${index}`} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="builder-card__header">
                   <strong>Project #{index + 1}</strong>
                   {form.projects.length > 1 ? (
@@ -400,7 +442,7 @@ function ResumeBuilderPage() {
                     placeholder="One bullet per line"
                   />
                 </label>
-              </div>
+              </motion.div>
             ))}
           </div>
 
@@ -424,9 +466,40 @@ function ResumeBuilderPage() {
         </div>
       </section>
 
+      <AnimatePresence>
+        {loading ? (
+          <AiProcessingPanel
+            title="Generating optimized resume"
+            stages={[
+              "Reading profile...",
+              "Optimizing Resume...",
+              "Sharpening bullet impact...",
+              "Balancing ATS structure...",
+              "Almost Done...",
+            ]}
+            tone="brain"
+          />
+        ) : null}
+        {pdfGenerating ? (
+          <AiProcessingPanel
+            title="Generating polished PDF"
+            stages={["Rendering template...", "Checking spacing...", "Preparing download...", "Finalizing PDF..."]}
+            tone="success"
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
       {editableResume ? (
-        <section className="builder-output-layout">
+        <motion.section
+          className="builder-output-layout"
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -14 }}
+          transition={motionTokens.spring}
+        >
           <article className="surface-card builder-editor-card">
+            <SuccessBurst active />
             <div className="section-heading">
               <div>
                 <p className="eyebrow">Step 3</p>
@@ -435,7 +508,7 @@ function ResumeBuilderPage() {
               <div className="inline-actions">
                 <button className="primary-button" type="button" onClick={handleDownloadPdf}>
                   <Download size={18} aria-hidden="true" />
-                  Download PDF
+                  {pdfGenerating ? "Generating PDF..." : "Download PDF"}
                 </button>
                 <Link className="secondary-button" to="/chat">
                   <MessageSquareText size={18} aria-hidden="true" />
@@ -514,7 +587,7 @@ function ResumeBuilderPage() {
             </div>
 
             {(editableResume.experience || []).map((item, index) => (
-              <div className="builder-card" key={`generated-experience-${index}`}>
+              <motion.div className="builder-card" key={`generated-experience-${index}`} layout>
                 <label className="field">
                   <span>Experience Title</span>
                   <input value={item.role} onChange={(event) => updateExperienceDraft(index, "role", event.target.value)} />
@@ -527,11 +600,11 @@ function ResumeBuilderPage() {
                     onChange={(event) => updateExperienceDraft(index, "points", event.target.value)}
                   />
                 </label>
-              </div>
+              </motion.div>
             ))}
 
             {(editableResume.projects || []).map((item, index) => (
-              <div className="builder-card" key={`generated-project-${index}`}>
+              <motion.div className="builder-card" key={`generated-project-${index}`} layout>
                 <label className="field">
                   <span>Project Title</span>
                   <input value={item.title} onChange={(event) => updateProjectDraft(index, "title", event.target.value)} />
@@ -544,7 +617,7 @@ function ResumeBuilderPage() {
                     onChange={(event) => updateProjectDraft(index, "points", event.target.value)}
                   />
                 </label>
-              </div>
+              </motion.div>
             ))}
 
             <label className="field">
@@ -558,8 +631,9 @@ function ResumeBuilderPage() {
           </article>
 
           <ResumePreview resume={editableResume} templateId={selectedTemplate} title="Live Final Preview" />
-        </section>
+        </motion.section>
       ) : null}
+      </AnimatePresence>
     </div>
   );
 }

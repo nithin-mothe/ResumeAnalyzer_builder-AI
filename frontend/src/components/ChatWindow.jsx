@@ -1,4 +1,6 @@
 import { SendHorizontal, Sparkles } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { AiProcessingPanel, itemVariants, listVariants, motionTokens } from "./MotionSystem";
 
 function renderMessageContent(content) {
   return String(content || "")
@@ -24,29 +26,59 @@ function ChatWindow({
   onStarterSelect,
 }) {
   return (
-    <section className="chat-window">
+    <motion.section
+      className="chat-window"
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.18 }}
+      transition={motionTokens.spring}
+    >
       {starterPrompts.length ? (
-        <div className="starter-row">
+        <motion.div className="starter-row" variants={listVariants} initial="hidden" animate="visible">
           {starterPrompts.map((prompt) => (
-            <button key={prompt} type="button" className="starter-chip" onClick={() => onStarterSelect(prompt)}>
+            <motion.button
+              key={prompt}
+              type="button"
+              className="starter-chip"
+              onClick={() => onStarterSelect(prompt)}
+              variants={itemVariants}
+              whileHover={{ y: -2, scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={motionTokens.spring}
+            >
               <Sparkles size={15} aria-hidden="true" />
               {prompt}
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
       ) : null}
-      <div className="chat-messages">
-        {messages.map((message, index) => (
-          <article
-            key={`${message.role}-${index}`}
-            className={`chat-bubble ${message.role === "assistant" ? "assistant" : "user"}`}
-          >
-            <span className="chat-role">{message.role === "assistant" ? "Resume AI" : "You"}</span>
-            <div className="chat-content">{renderMessageContent(message.content)}</div>
-          </article>
-        ))}
-        {pending ? <p className="muted">AI is thinking...</p> : null}
-      </div>
+      <motion.div className="chat-messages" variants={listVariants} initial="hidden" animate="visible">
+        <AnimatePresence initial={false}>
+          {messages.map((message, index) => (
+            <motion.article
+              key={`${message.role}-${index}`}
+              className={`chat-bubble ${message.role === "assistant" ? "assistant" : "user"}`}
+              variants={itemVariants}
+              initial="hidden"
+              animate="visible"
+              exit={{ opacity: 0, y: -8 }}
+              layout
+            >
+              <span className="chat-role">{message.role === "assistant" ? "Resume AI" : "You"}</span>
+              <div className="chat-content">{renderMessageContent(message.content)}</div>
+            </motion.article>
+          ))}
+          {pending ? (
+            <AiProcessingPanel
+              key="chat-thinking"
+              title="Resume AI is thinking"
+              stages={["Reading context...", "Finding leverage points...", "Drafting response...", "Checking clarity..."]}
+              tone="brain"
+              compact
+            />
+          ) : null}
+        </AnimatePresence>
+      </motion.div>
       <form className="chat-form" onSubmit={onSubmit}>
         <textarea
           name="message"
@@ -55,12 +87,12 @@ function ChatWindow({
           onChange={(event) => onInputChange(event.target.value)}
           placeholder="Ask about your resume, targeting, interview preparation, or ask the assistant to generate a draft."
         />
-        <button type="submit" className="primary-button">
+        <motion.button type="submit" className="primary-button" whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}>
           <SendHorizontal size={18} aria-hidden="true" />
           Send
-        </button>
+        </motion.button>
       </form>
-    </section>
+    </motion.section>
   );
 }
 

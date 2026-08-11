@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -9,6 +10,7 @@ import {
   Sparkles,
   WandSparkles,
 } from "lucide-react";
+import { itemVariants, listVariants, motionTokens, Reveal } from "../components/MotionSystem";
 import PageHero from "../components/PageHero";
 
 const featureCards = [
@@ -79,8 +81,8 @@ function Home({ session }) {
         ]}
       />
 
-      <section className="home-highlight-grid">
-        <article className="feature-spotlight feature-spotlight--dark">
+      <Reveal className="home-highlight-grid">
+        <motion.article className="feature-spotlight feature-spotlight--dark" whileHover={{ y: -5 }} transition={motionTokens.spring}>
           <p className="eyebrow">Why it feels better</p>
           <h2>Less guesswork. More guided progress.</h2>
           <p>
@@ -93,9 +95,9 @@ function Home({ session }) {
             <span>Live resume preview before download</span>
             <span>Chat-driven revision workflow</span>
           </div>
-        </article>
+        </motion.article>
 
-        <article className="feature-spotlight">
+        <motion.article className="feature-spotlight" whileHover={{ y: -5 }} transition={motionTokens.spring}>
           <p className="eyebrow">Who it serves</p>
           <h2>Friendly for beginners, credible for senior candidates.</h2>
           <p>
@@ -105,14 +107,20 @@ function Home({ session }) {
           <Link className="inline-link" to="/chat">
             Try Resume Chat
           </Link>
-        </article>
-      </section>
+        </motion.article>
+      </Reveal>
 
-      <section className="feature-grid">
+      <motion.section className="feature-grid" variants={listVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.14 }}>
         {featureCards.map((card) => {
           const Icon = card.Icon;
           return (
-            <article key={card.title} className="surface-card feature-card">
+            <motion.article
+              key={card.title}
+              className="surface-card feature-card"
+              variants={itemVariants}
+              whileHover={{ y: -6, scale: 1.012 }}
+              transition={motionTokens.spring}
+            >
               <span className="feature-card__icon" aria-hidden="true">
                 <Icon size={21} />
               </span>
@@ -122,12 +130,12 @@ function Home({ session }) {
               <span className="feature-card__link">
                 Explore <ArrowRight size={15} aria-hidden="true" />
               </span>
-            </article>
+            </motion.article>
           );
         })}
-      </section>
+      </motion.section>
 
-      <section className="surface-card workflow-card">
+      <Reveal className="surface-card workflow-card">
         <div className="section-heading">
           <div>
             <p className="eyebrow">How It Works</p>
@@ -136,13 +144,21 @@ function Home({ session }) {
         </div>
         <div className="workflow-grid">
           {steps.map((step, index) => (
-            <article key={step} className="workflow-step">
+            <motion.article
+              key={step}
+              className="workflow-step"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ ...motionTokens.spring, delay: index * 0.045 }}
+              whileHover={{ y: -4 }}
+            >
               <span className="workflow-step__index">0{index + 1}</span>
               <p>{step}</p>
-            </article>
+            </motion.article>
           ))}
         </div>
-      </section>
+      </Reveal>
     </div>
   );
 }
