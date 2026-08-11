@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Download, MessageSquareText, Plus, Sparkles, Trash2 } from "lucide-react";
+import { CheckCircle2, Download, FileText, MessageSquareText, Plus, Sparkles, Trash2, WandSparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AiProcessingPanel, motionTokens, SuccessBurst } from "../components/MotionSystem";
 import PageHero from "../components/PageHero";
@@ -9,7 +9,6 @@ import TemplateSelector from "../components/TemplateSelector";
 import { buildResume, generateResumePdf } from "../services/api";
 import {
   buildResumePayload,
-  createPreviewResume,
   hydrateGeneratedResume,
   joinLineValues,
   splitCommaValues,
@@ -44,10 +43,7 @@ function ResumeBuilderPage() {
     () => localStorage.getItem("selectedTemplateId") || "executive"
   );
   const [form, setForm] = useState(initialFormState);
-  const [editableResume, setEditableResume] = useState(() => {
-    const saved = localStorage.getItem("latestBuiltResume");
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [editableResume, setEditableResume] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
@@ -207,17 +203,26 @@ function ResumeBuilderPage() {
     }));
   };
 
-  const previewResume = editableResume || createPreviewResume(form);
+  const readinessItems = [
+    { label: "Name and target role", complete: Boolean(form.name && form.target_role) },
+    { label: "Career direction", complete: Boolean(form.summary) },
+    { label: "Education", complete: Boolean(form.education) },
+    { label: "Skills grouped by type", complete: Boolean(form.languages || form.frameworks || form.tools) },
+    {
+      label: "At least one real achievement",
+      complete: form.experience.some((item) => item.role && item.achievementsText),
+    },
+  ];
 
   return (
     <div className="stack page-stack">
       <PageHero
         eyebrow="AI Resume Builder"
         title="Choose a template, generate a stronger draft, and edit it live before download."
-        description="This builder now gives you templates, live preview, editable output, and a cleaner workflow that feels closer to a real production resume studio."
+        description="Fill the profile once, let ResumeForge AI rewrite it with stronger positioning, then review an ATS-clean final resume before downloading."
         stats={[
           { value: "3", label: "Template options" },
-          { value: editableResume ? "Ready" : "Draft", label: "Preview state" },
+          { value: editableResume ? "Ready" : `${builderProgress}%`, label: "Builder readiness" },
           { value: editableResume?.experience?.length || 0, label: "Experience sections" },
         ]}
       />
@@ -450,19 +455,55 @@ function ResumeBuilderPage() {
         </form>
 
         <div className="builder-preview-column">
-          <ResumePreview
-            resume={previewResume}
-            templateId={selectedTemplate}
-            title={editableResume ? "Generated Preview" : "Template Preview"}
-          />
-          <div className="surface-card preview-tip-card">
-            <p className="eyebrow">Why this is better now</p>
-            <h3>Preview before you commit</h3>
-            <p>
-              The preview updates with your selected template, so you can judge structure, clarity, and presentation
-              before downloading the final PDF.
-            </p>
-          </div>
+          <motion.aside
+            className="surface-card builder-readiness-card"
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={motionTokens.spring}
+          >
+            <div className="readiness-ring" aria-hidden="true" style={{ "--readiness": `${builderProgress}%` }}>
+              <span>{builderProgress}%</span>
+            </div>
+            <div className="stack">
+              <p className="eyebrow">ResumeForge Studio</p>
+              <h3>No preview until AI builds it</h3>
+              <p>
+                Add the facts here first. When you click Generate Resume, the AI will produce a complete,
+                reference-style ATS resume with stronger bullets and a clean final preview.
+              </p>
+            </div>
+
+            <div className="readiness-checklist">
+              {readinessItems.map((item, index) => (
+                <motion.div
+                  key={item.label}
+                  className={item.complete ? "readiness-item readiness-item--complete" : "readiness-item"}
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ ...motionTokens.spring, delay: index * 0.04 }}
+                >
+                  {item.complete ? <CheckCircle2 size={17} aria-hidden="true" /> : <span>{index + 1}</span>}
+                  <strong>{item.label}</strong>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="ai-quality-card">
+              <WandSparkles size={22} aria-hidden="true" />
+              <div>
+                <strong>AI enhancement mode</strong>
+                <p>Truthful, quantified where possible, stronger action verbs, tighter ATS section order.</p>
+              </div>
+            </div>
+
+            <div className="reference-format-card">
+              <FileText size={22} aria-hidden="true" />
+              <div>
+                <strong>Reference output format</strong>
+                <p>Name header, role tagline, contact row, uppercase sections, skills rows, compact bullets.</p>
+              </div>
+            </div>
+          </motion.aside>
         </div>
       </section>
 

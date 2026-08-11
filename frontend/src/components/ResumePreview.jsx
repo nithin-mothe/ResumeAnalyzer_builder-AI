@@ -11,6 +11,11 @@ function ResumePreview({ resume, templateId = "executive", title = "Resume Previ
     resume?.contact?.linkedin,
     resume?.contact?.website,
   ].filter(Boolean);
+  const skillRows = [
+    ["Languages", resume?.skills?.languages || []],
+    ["Frameworks", resume?.skills?.frameworks || []],
+    ["Tools", resume?.skills?.tools || []],
+  ].filter(([, values]) => values.length);
 
   return (
     <motion.section
@@ -40,7 +45,7 @@ function ResumePreview({ resume, templateId = "executive", title = "Resume Previ
         transition={motionTokens.spring}
       >
         <header className="resume-preview__header">
-          <h2>{resume?.name}</h2>
+          <h2>{resume?.name ? resume.name.toUpperCase() : ""}</h2>
           <p className="resume-preview__headline">{resume?.headline}</p>
           {contact.length ? <p className="resume-preview__contact">{contact.join(" | ")}</p> : null}
         </header>
@@ -52,21 +57,12 @@ function ResumePreview({ resume, templateId = "executive", title = "Resume Previ
 
         <motion.section className="resume-preview__section" variants={itemVariants}>
           <h4>Skills</h4>
-          <div className="skill-pill-row">
-            {(resume?.skills?.languages || []).map((item) => (
-              <motion.span key={`lang-${item}`} className="skill-pill" whileHover={{ y: -2, scale: 1.03 }}>
-                {item}
-              </motion.span>
-            ))}
-            {(resume?.skills?.frameworks || []).map((item) => (
-              <motion.span key={`framework-${item}`} className="skill-pill" whileHover={{ y: -2, scale: 1.03 }}>
-                {item}
-              </motion.span>
-            ))}
-            {(resume?.skills?.tools || []).map((item) => (
-              <motion.span key={`tool-${item}`} className="skill-pill" whileHover={{ y: -2, scale: 1.03 }}>
-                {item}
-              </motion.span>
+          <div className="skill-row-list">
+            {skillRows.map(([label, values]) => (
+              <div className="skill-row" key={label}>
+                <strong>{label}:</strong>
+                <span>{values.join(", ")}</span>
+              </div>
             ))}
           </div>
         </motion.section>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { LogIn, Mail, UserPlus } from "lucide-react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AiProcessingPanel, motionTokens } from "../components/MotionSystem";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
@@ -14,11 +14,16 @@ function getAuthRedirectOrigin() {
     return configuredOrigin.replace(/\/$/, "");
   }
 
+  if (typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+    return window.location.origin;
+  }
+
   return CANONICAL_PUBLIC_ORIGIN;
 }
 
 function AuthPage({ session, authReady }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,6 +35,11 @@ function AuthPage({ session, authReady }) {
   const nextPath = location.state?.from?.pathname || "/profile";
 
   useEffect(() => {
+    if (!supabase) {
+      return undefined;
+    }
+
+    let cancelled = false;
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const queryParams = new URLSearchParams(window.location.search);
     const authError =
@@ -40,15 +50,66 @@ function AuthPage({ session, authReady }) {
 
     if (authError) {
       setError(authError.replace(/\+/g, " "));
+      return undefined;
     }
 
     const authCode = queryParams.get("code");
     const accessToken = hashParams.get("access_token");
+    const refreshToken = hashParams.get("refresh_token");
 
-    if (authCode || accessToken) {
+    if (authCode) {
       setStatus("Authentication completed. Redirecting you into ResumeForge...");
+      setSubmitting(true);
+
+      supabase.auth
+        .exchangeCodeForSession(authCode)
+        .then(({ error: exchangeError }) => {
+          if (cancelled) {
+            return;
+          }
+          if (exchangeError) {
+            setError(`${exchangeError.message} Please try signing in again or check Supabase Google redirect URLs.`);
+            setSubmitting(false);
+            return;
+          }
+          window.history.replaceState({}, document.title, "/auth");
+          navigate(nextPath, { replace: true });
+        })
+        .catch((exchangeError) => {
+          if (!cancelled) {
+            setError(`${exchangeError.message} Please try signing in again.`);
+            setSubmitting(false);
+          }
+        });
+    } else if (accessToken && refreshToken) {
+      setStatus("Authentication completed. Redirecting you into ResumeForge...");
+      setSubmitting(true);
+      supabase.auth
+        .setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ error: sessionError }) => {
+          if (cancelled) {
+            return;
+          }
+          if (sessionError) {
+            setError(`${sessionError.message} Please try signing in again.`);
+            setSubmitting(false);
+            return;
+          }
+          window.history.replaceState({}, document.title, "/auth");
+          navigate(nextPath, { replace: true });
+        })
+        .catch((sessionError) => {
+          if (!cancelled) {
+            setError(`${sessionError.message} Please try signing in again.`);
+            setSubmitting(false);
+          }
+        });
     }
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate, nextPath]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -110,6 +171,10 @@ function AuthPage({ session, authReady }) {
         provider: "google",
         options: {
           redirectTo,
+          queryParams: {
+            access_type: "offline",
+            prompt: "select_account",
+          },
         },
       });
 
