@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { LogIn, Mail, UserPlus } from "lucide-react";
+import { LogIn, UserPlus } from "lucide-react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AiProcessingPanel, motionTokens } from "../components/MotionSystem";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
@@ -164,13 +164,14 @@ function AuthPage({ session, authReady }) {
 
     setSubmitting(true);
     setError("");
-    setStatus("");
+    setStatus("Opening Google sign-in...");
 
     try {
       const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo,
+          skipBrowserRedirect: true,
           queryParams: {
             access_type: "offline",
             prompt: "select_account",
@@ -184,9 +185,15 @@ function AuthPage({ session, authReady }) {
 
       if (data?.url) {
         window.location.assign(data.url);
+        return;
       }
+
+      setError("Supabase did not return a Google sign-in URL. Check that the Google provider is enabled.");
+      setStatus("");
+      setSubmitting(false);
     } catch (authError) {
       setError(`${authError.message} Check Google provider setup and Supabase redirect URLs for the deployed domain.`);
+      setStatus("");
       setSubmitting(false);
     }
   };
@@ -235,7 +242,7 @@ function AuthPage({ session, authReady }) {
       </p>
 
       <button className="oauth-button" type="button" onClick={handleGoogleAuth} disabled={submitting}>
-        <Mail size={18} aria-hidden="true" />
+        <span className="google-mark" aria-hidden="true">G</span>
         Continue with Google
       </button>
 

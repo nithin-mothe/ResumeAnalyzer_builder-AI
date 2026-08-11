@@ -94,6 +94,7 @@ function App() {
                   <Route path="/job-tracker" element={<JobTrackerPage />} />
                   <Route path="/profile" element={<ProfilePage session={session} authReady={authReady} />} />
                   <Route path="/auth" element={<AuthPage session={session} authReady={authReady} />} />
+                  <Route path="/auth/callback" element={<AuthPage session={session} authReady={authReady} />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </motion.div>

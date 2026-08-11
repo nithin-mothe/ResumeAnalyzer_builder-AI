@@ -44,7 +44,7 @@ npm run dev
 Create `frontend/.env` with `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY`.
 
 For Vercel production, set `VITE_API_BASE_URL` to the live Render backend URL so browser requests do not point at localhost.
-Set `VITE_AUTH_REDIRECT_ORIGIN=https://www.resumeforgeai.online` so email confirmations and OAuth callbacks always return to the public site.
+Set `VITE_AUTH_REDIRECT_ORIGIN=https://www.resumeforgeai.online` so email confirmations and OAuth callbacks always return to the public site. The app accepts both `/auth` and `/auth/callback` as callback routes.
 
 ## Supabase Manual Setup
 
@@ -53,7 +53,7 @@ Set `VITE_AUTH_REDIRECT_ORIGIN=https://www.resumeforgeai.online` so email confir
 3. Confirm the `resume-files` storage bucket exists.
 4. Enable email/password auth.
 5. Enable Google under Supabase Auth providers, then add the Google OAuth client ID and secret from Google Cloud Console.
-6. In Supabase Auth settings, add `https://www.resumeforgeai.online/auth` as the primary redirect URL and keep `https://resumeforgeai.online/auth` only if the apex domain may receive auth traffic before redirecting. For local testing, also add `http://localhost:5173/auth` and `http://127.0.0.1:5173/auth`.
+6. In Supabase Auth settings, add `https://www.resumeforgeai.online/auth` and `https://www.resumeforgeai.online/auth/callback` as allowed redirect URLs. Keep `https://resumeforgeai.online/auth` only if the apex domain may receive auth traffic before redirecting. For local testing, also add `http://localhost:5173/auth`, `http://127.0.0.1:5173/auth`, `http://localhost:5173/auth/callback`, and `http://127.0.0.1:5173/auth/callback`.
 7. In Google Cloud Console, add Supabase's callback URL from the Google provider panel as an authorized redirect URI. The public app redirects back to `https://www.resumeforgeai.online/auth` after Supabase completes OAuth.
 8. In Supabase `Project Settings` -> `API`, copy the project URL into both frontend and backend config, use the publishable anon key in the frontend, and use the `service_role` key only in the backend.
 

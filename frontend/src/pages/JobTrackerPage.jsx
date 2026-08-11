@@ -48,6 +48,20 @@ const toApiApplication = (job) => ({
   notes: job.notes || null,
 });
 
+const getSyncFallbackMessage = (message) => {
+  const lowerMessage = String(message || "").toLowerCase();
+  if (
+    lowerMessage.includes("supabase is not configured") ||
+    lowerMessage.includes("authenticated") ||
+    lowerMessage.includes("invalid") ||
+    lowerMessage.includes("expired")
+  ) {
+    return "Cloud sync is not available yet. Your tracker is saved locally on this device.";
+  }
+
+  return message;
+};
+
 function JobTrackerPage() {
   const [jobs, setJobs] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -88,13 +102,14 @@ function JobTrackerPage() {
         setJobs(applications.map(toClientJob));
         setServerSync(true);
         setSyncStatus("Synced to your account");
+        setError("");
       } catch (loadError) {
         if (!active) {
           return;
         }
         setServerSync(false);
         setSyncStatus("Using local fallback");
-        setError(loadError.message);
+        setError(getSyncFallbackMessage(loadError.message));
       }
     };
 
@@ -165,7 +180,7 @@ function JobTrackerPage() {
       setJobs((current) => [localJob, ...current]);
       setServerSync(false);
       setSyncStatus("Using local fallback");
-      setError(saveError.message);
+      setError(getSyncFallbackMessage(saveError.message));
       setForm(emptyJob);
     }
   };
@@ -186,7 +201,7 @@ function JobTrackerPage() {
       setError("");
     } catch (updateError) {
       setJobs(previousJobs);
-      setError(updateError.message);
+      setError(getSyncFallbackMessage(updateError.message));
     }
   };
 
@@ -203,7 +218,7 @@ function JobTrackerPage() {
       setError("");
     } catch (deleteError) {
       setJobs(previousJobs);
-      setError(deleteError.message);
+      setError(getSyncFallbackMessage(deleteError.message));
     }
   };
 

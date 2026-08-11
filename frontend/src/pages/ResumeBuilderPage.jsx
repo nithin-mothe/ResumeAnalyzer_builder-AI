@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, Download, FileText, MessageSquareText, Plus, Sparkles, Trash2, WandSparkles } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -39,6 +39,7 @@ const initialFormState = {
 };
 
 function ResumeBuilderPage() {
+  const outputRef = useRef(null);
   const [selectedTemplate, setSelectedTemplate] = useState(
     () => localStorage.getItem("selectedTemplateId") || "executive"
   );
@@ -122,6 +123,9 @@ function ResumeBuilderPage() {
       setEditableResume(hydrated);
       localStorage.setItem("latestBuiltResume", JSON.stringify(hydrated));
       localStorage.setItem("latestResumeProfile", JSON.stringify(form));
+      window.setTimeout(() => {
+        outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 240);
     } catch (buildError) {
       setError(buildError.message);
     } finally {
@@ -533,6 +537,7 @@ function ResumeBuilderPage() {
       <AnimatePresence>
       {editableResume ? (
         <motion.section
+          ref={outputRef}
           className="builder-output-layout"
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
@@ -541,6 +546,20 @@ function ResumeBuilderPage() {
         >
           <article className="surface-card builder-editor-card">
             <SuccessBurst active />
+            <motion.div
+              className="builder-success-banner"
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ ...motionTokens.spring, delay: 0.08 }}
+            >
+              <CheckCircle2 size={22} aria-hidden="true" />
+              <div>
+                <strong>AI draft generated</strong>
+                <p>
+                  Review the sections below, tune any wording you want, then download the reference-style ATS PDF.
+                </p>
+              </div>
+            </motion.div>
             <div className="section-heading">
               <div>
                 <p className="eyebrow">Step 3</p>
