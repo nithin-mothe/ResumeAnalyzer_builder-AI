@@ -6,6 +6,12 @@ const BACKEND_WAKE_WINDOW_MS = 5 * 60 * 1000;
 const LOCAL_FRONTEND_HOSTS = new Set(["localhost", "127.0.0.1"]);
 
 function getApiBaseUrl() {
+  // Production requests stay on the app's origin and are proxied by Vercel.
+  // This avoids browser-level cross-origin failures when the Render API wakes up.
+  if (import.meta.env.PROD) {
+    return "/api";
+  }
+
   const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
 
   if (configuredBaseUrl) {
