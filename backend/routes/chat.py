@@ -1,12 +1,12 @@
 from fastapi import APIRouter
 
-from ai_engine import GroqAIEngine
+from ai_engine import AIEngine
 from config import get_settings
 from models import ChatRequest, ChatResponse
 
 
 router = APIRouter(tags=["chat"])
-ai_engine = GroqAIEngine(get_settings())
+ai_engine = AIEngine(get_settings())
 
 
 @router.post("/resume-chat", response_model=ChatResponse)

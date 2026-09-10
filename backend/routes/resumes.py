@@ -1,7 +1,7 @@
 from fastapi import APIRouter, File, Header, Response, UploadFile
 from fastapi.responses import StreamingResponse
 
-from ai_engine import GroqAIEngine
+from ai_engine import AIEngine
 from ats_matcher import ATSMatcher
 from config import get_settings
 from database import DatabaseClient
@@ -30,7 +30,7 @@ from utils.errors import AppError
 
 router = APIRouter(tags=["resumes"])
 settings = get_settings()
-ai_engine = GroqAIEngine(settings)
+ai_engine = AIEngine(settings)
 resume_parser = ResumeParser(settings)
 resume_analyzer = ResumeAnalyzer(ai_engine)
 ats_matcher = ATSMatcher()

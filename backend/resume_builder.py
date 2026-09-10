@@ -1,9 +1,9 @@
-from ai_engine import GroqAIEngine
+from ai_engine import AIEngine
 from models import BuildResumeRequest, BuiltResume, ContactInfo, RedesignResumeRequest
 
 
 class ResumeBuilder:
-    def __init__(self, ai_engine: GroqAIEngine) -> None:
+    def __init__(self, ai_engine: AIEngine) -> None:
         self.ai_engine = ai_engine
 
     async def build(self, request: BuildResumeRequest) -> BuiltResume:

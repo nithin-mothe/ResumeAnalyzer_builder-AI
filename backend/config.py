@@ -9,15 +9,14 @@ DEFAULT_CORS_ORIGINS = [
     "https://resumeforgeai.online",
     "https://www.resumeforgeai.online",
 ]
-DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b"
-RETIRED_GROQ_MODELS = {
-    "llama-3.3-70b-versatile": DEFAULT_GROQ_MODEL,
-}
+DEFAULT_AI_MODEL = "google/gemini-2.0-flash-exp:free"
+DEFAULT_AI_BASE_URL = "https://openrouter.ai/api/v1"
 
 
 class Settings(BaseSettings):
-    groq_api_key: str | None = None
-    groq_model: str = DEFAULT_GROQ_MODEL
+    ai_api_key: str | None = None
+    ai_model: str = DEFAULT_AI_MODEL
+    ai_base_url: str = DEFAULT_AI_BASE_URL
     supabase_url: str | None = None
     supabase_key: str | None = None
     cors_origins: Annotated[list[str], NoDecode] = Field(
@@ -46,12 +45,6 @@ class Settings(BaseSettings):
         merged_origins = [*value, *DEFAULT_CORS_ORIGINS]
         return list(dict.fromkeys(merged_origins))
 
-    @field_validator("groq_model", mode="before")
-    @classmethod
-    def use_supported_groq_model(cls, value: str) -> str:
-        normalized_model = str(value).strip()
-        return RETIRED_GROQ_MODELS.get(normalized_model, normalized_model)
-
     @property
     def supabase_enabled(self) -> bool:
         return bool(self.supabase_url and self.supabase_key)
@@ -60,6 +53,6 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     settings = Settings()
-    if not settings.groq_api_key:
-        raise RuntimeError("Provide GROQ_API_KEY in backend/.env before starting the API.")
+    if not settings.ai_api_key:
+        raise RuntimeError("Provide AI_API_KEY in backend/.env before starting the API.")
     return settings

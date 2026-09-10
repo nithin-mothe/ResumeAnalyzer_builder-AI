@@ -2,7 +2,7 @@ import asyncio
 import json
 from typing import TypeVar
 
-from groq import Groq
+from openai import OpenAI
 from pydantic import BaseModel, ValidationError
 
 from config import Settings
@@ -21,12 +21,15 @@ from utils.json_utils import extract_json_payload
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
-class GroqAIEngine:
+class AIEngine:
     def __init__(self, settings: Settings) -> None:
-        if not settings.groq_api_key:
-            raise RuntimeError("Provide GROQ_API_KEY")
+        if not settings.ai_api_key:
+            raise RuntimeError("Provide AI_API_KEY")
         self.settings = settings
-        self.client = Groq(api_key=settings.groq_api_key)
+        self.client = OpenAI(
+            api_key=settings.ai_api_key,
+            base_url=settings.ai_base_url,
+        )
 
     async def analyze_resume_with_ai(self, text: str) -> ResumeAnalysisResponse:
         system_prompt = (
@@ -145,15 +148,16 @@ class GroqAIEngine:
     def _sync_complete_text(self, messages: list[dict[str, str]], temperature: float) -> str:
         try:
             response = self.client.chat.completions.create(
-                model=self.settings.groq_model,
+                model=self.settings.ai_model,
                 messages=messages,
                 temperature=temperature,
             )
         except Exception as exc:  # pragma: no cover
+            print(f"DEBUG: OpenRouter Error: {str(exc)}")
             raise AppError(
                 502,
-                "Groq request failed. Check the API key, model, or upstream availability.",
-                code="groq_request_failed",
+                "AI request failed. Check the API key, model, or upstream availability.",
+                code="ai_request_failed",
                 details={"error": str(exc)},
             ) from exc
 
@@ -162,7 +166,7 @@ class GroqAIEngine:
             content = response.choices[0].message.content or ""
 
         if not content.strip():
-            raise AppError(502, "Groq returned an empty response.", code="groq_empty_response")
+            raise AppError(502, "AI returned an empty response.", code="ai_empty_response")
         return content.strip()
 
     def _bounded_text(self, value: str, *, limit: int = 16000) -> str:

@@ -1,9 +1,9 @@
-from ai_engine import GroqAIEngine
+from ai_engine import AIEngine
 from models import ResumeAnalysisResponse
 
 
 class ResumeAnalyzer:
-    def __init__(self, ai_engine: GroqAIEngine) -> None:
+    def __init__(self, ai_engine: AIEngine) -> None:
         self.ai_engine = ai_engine
 
     async def analyze(self, resume_text: str) -> ResumeAnalysisResponse:
