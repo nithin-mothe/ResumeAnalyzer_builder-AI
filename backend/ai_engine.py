@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 from typing import TypeVar
 
 from openai import OpenAI
@@ -19,6 +20,14 @@ from utils.json_utils import extract_json_payload
 
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
+logger = logging.getLogger(__name__)
+
+# Free providers can be temporarily rate-limited. Keep independent providers
+# available so one provider outage does not take down resume analysis.
+FALLBACK_MODELS = (
+    "nex-agi/nex-n2.5-mini:free",
+    "liquid/lfm-2.5-2.6b:free",
+)
 
 
 class AIEngine:
@@ -146,28 +155,32 @@ class AIEngine:
         return await asyncio.to_thread(self._sync_complete_text, messages, temperature)
 
     def _sync_complete_text(self, messages: list[dict[str, str]], temperature: float) -> str:
-        try:
-            response = self.client.chat.completions.create(
-                model=self.settings.ai_model,
-                messages=messages,
-                temperature=temperature,
-            )
-        except Exception as exc:  # pragma: no cover
-            print(f"DEBUG: OpenRouter Error: {str(exc)}")
-            raise AppError(
-                502,
-                "AI request failed. Check the API key, model, or upstream availability.",
-                code="ai_request_failed",
-                details={"error": str(exc)},
-            ) from exc
+        models = tuple(dict.fromkeys((self.settings.ai_model, *FALLBACK_MODELS)))
+        failures: list[str] = []
 
-        content = ""
-        if response.choices:
-            content = response.choices[0].message.content or ""
+        for model in models:
+            try:
+                response = self.client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    temperature=temperature,
+                )
+                content = response.choices[0].message.content if response.choices else ""
+                if content and content.strip():
+                    if model != self.settings.ai_model:
+                        logger.warning("AI fallback model %s served the request", model)
+                    return content.strip()
+                failures.append(f"{model}: empty response")
+            except Exception as exc:  # pragma: no cover - depends on upstream provider state
+                failures.append(f"{model}: {exc}")
 
-        if not content.strip():
-            raise AppError(502, "AI returned an empty response.", code="ai_empty_response")
-        return content.strip()
+        logger.error("All configured AI models failed: %s", " | ".join(failures))
+        raise AppError(
+            502,
+            "AI providers are temporarily unavailable. Please try again in a moment.",
+            code="ai_request_failed",
+            details={"attempted_models": list(models)},
+        )
 
     def _bounded_text(self, value: str, *, limit: int = 16000) -> str:
         stripped = (value or "").strip()

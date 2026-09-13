@@ -9,7 +9,9 @@ DEFAULT_CORS_ORIGINS = [
     "https://resumeforgeai.online",
     "https://www.resumeforgeai.online",
 ]
-DEFAULT_AI_MODEL = "google/gemini-2.0-flash-exp:free"
+# Keep this aligned with a model currently available from OpenRouter. The
+# previous Gemini experimental endpoint was retired by the provider.
+DEFAULT_AI_MODEL = "nex-agi/nex-n2.5-mini:free"
 DEFAULT_AI_BASE_URL = "https://openrouter.ai/api/v1"
 
 
