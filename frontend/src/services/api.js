@@ -138,6 +138,12 @@ export const chatWithResume = async (payload) => {
   return data;
 };
 
+export const buildResumeFromChat = async (payload) => {
+  await ensureBackendReady();
+  const { data } = await api.post("/build-resume-from-chat", payload);
+  return data;
+};
+
 export const generateResumePdf = async (resume, templateId = "executive") => {
   await ensureBackendReady();
   const response = await api.post(

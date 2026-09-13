@@ -7,7 +7,7 @@ import { AiProcessingPanel, motionTokens, SuccessBurst } from "../components/Mot
 import PageHero from "../components/PageHero";
 import ResumePreview from "../components/ResumePreview";
 import TemplateSelector from "../components/TemplateSelector";
-import { buildResume, chatWithResume, generateResumePdf } from "../services/api";
+import { buildResume, buildResumeFromChat, chatWithResume, generateResumePdf } from "../services/api";
 import { hydrateGeneratedResume, resumeToChatContext, splitCommaValues, splitLineValues } from "../utils/resume";
 
 const starterPrompts = [
@@ -16,6 +16,12 @@ const starterPrompts = [
   "Rewrite my summary to sound more senior",
   "Help me prepare a Google-ready version",
 ];
+
+const isAffirmative = (value) =>
+  /\b(yes|yeah|yep|sure|please do|go ahead|generate|create|make it|download it)\b/i.test(String(value || ""));
+
+const isConversationComplete = (value) =>
+  /\b(done|finished|finish|complete|wrap up|that'?s all|that is all|no more questions)\b/i.test(String(value || ""));
 
 function ResumeChatPage() {
   const [selectedTemplate, setSelectedTemplate] = useState(
@@ -33,6 +39,7 @@ function ResumeChatPage() {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [awaitingResumeDecision, setAwaitingResumeDecision] = useState(false);
   const [generatedResume, setGeneratedResume] = useState(() => {
     const saved = localStorage.getItem("latestBuiltResume");
     return saved ? JSON.parse(saved) : null;
@@ -72,11 +79,128 @@ function ResumeChatPage() {
     return resumeText;
   }, [generatedResume, resumeText]);
 
+  const downloadResumeFile = async (resume) => {
+    setPdfGenerating(true);
+    setError("");
+    try {
+      const blob = await generateResumePdf(resume, selectedTemplate);
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${(resume.name || "resume").replace(/\s+/g, "-").toLowerCase()}.pdf`;
+      anchor.click();
+      window.URL.revokeObjectURL(url);
+    } catch (downloadError) {
+      setError(downloadError.message);
+    } finally {
+      setPdfGenerating(false);
+    }
+  };
+
+  const offerResumeGeneration = () => {
+    setAwaitingResumeDecision(true);
+    setMessages((current) => [
+      ...current,
+      {
+        role: "assistant",
+        content:
+          "I’ve captured the details from our conversation. Would you like me to create and download a tailored resume from them? Reply **Yes** to generate it, or keep chatting to add anything important.",
+      },
+    ]);
+  };
+
+  const generateResumeFromConversation = async (conversation) => {
+    setPending(true);
+    setError("");
+
+    try {
+      const data = await buildResumeFromChat({
+        history: conversation,
+        resume_text: resumeText || activeResumeContext || null,
+      });
+      const hydrated = hydrateGeneratedResume(data.resume, assistantDraft);
+
+      if (!hydrated.name.trim() || !hydrated.education.trim()) {
+        setMessages((current) => [
+          ...current,
+          {
+            role: "assistant",
+            content:
+              "I need your **name** and **education** before I can create a complete resume. Share those details, then choose Finish chat again.",
+          },
+        ]);
+        return;
+      }
+
+      setGeneratedResume(hydrated);
+      setAssistantDraft((current) => ({
+        ...current,
+        name: hydrated.name || current.name,
+        email: hydrated.contact?.email || current.email,
+        phone: hydrated.contact?.phone || current.phone,
+        location: hydrated.contact?.location || current.location,
+        target_role: hydrated.headline || current.target_role,
+        summary: hydrated.summary || current.summary,
+        education: hydrated.education || current.education,
+        languages: (hydrated.skills?.languages || []).join(", ") || current.languages,
+        frameworks: (hydrated.skills?.frameworks || []).join(", ") || current.frameworks,
+        tools: (hydrated.skills?.tools || []).join(", ") || current.tools,
+      }));
+      localStorage.setItem("latestBuiltResume", JSON.stringify(hydrated));
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content:
+            "**Your resume is ready.** I generated it from this conversation and started the PDF download. You can also review the preview below and ask me to refine any section.",
+        },
+      ]);
+      await downloadResumeFile(hydrated);
+    } catch (generationError) {
+      setError(generationError.message);
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const handleResumeDecision = async (decision) => {
+    const conversation = [...messages, { role: "user", content: decision }];
+    setMessages(conversation);
+    setAwaitingResumeDecision(false);
+
+    if (isAffirmative(decision)) {
+      await generateResumeFromConversation(conversation);
+      return;
+    }
+
+    setMessages((current) => [
+      ...current,
+      {
+        role: "assistant",
+        content: "Absolutely. Keep sharing details or ask for changes whenever you are ready.",
+      },
+    ]);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     const message = inputValue.trim();
     if (!message) {
       setError("Enter a message before sending.");
+      return;
+    }
+
+    if (awaitingResumeDecision) {
+      setInputValue("");
+      await handleResumeDecision(message);
+      return;
+    }
+
+    if (isConversationComplete(message)) {
+      setMessages((current) => [...current, { role: "user", content: message }]);
+      setInputValue("");
+      setError("");
+      offerResumeGeneration();
       return;
     }
 
@@ -172,22 +296,7 @@ function ResumeChatPage() {
     if (!generatedResume) {
       return;
     }
-
-    setPdfGenerating(true);
-    setError("");
-    try {
-      const blob = await generateResumePdf(generatedResume, selectedTemplate);
-      const url = window.URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = `${(generatedResume.name || "resume").replace(/\s+/g, "-").toLowerCase()}.pdf`;
-      anchor.click();
-      window.URL.revokeObjectURL(url);
-    } catch (downloadError) {
-      setError(downloadError.message);
-    } finally {
-      setPdfGenerating(false);
-    }
+    await downloadResumeFile(generatedResume);
   };
 
   return (
@@ -213,6 +322,10 @@ function ResumeChatPage() {
             onInputChange={setInputValue}
             starterPrompts={starterPrompts}
             onStarterSelect={setInputValue}
+            awaitingResumeDecision={awaitingResumeDecision}
+            onFinishConversation={offerResumeGeneration}
+            onResumeOfferAccept={() => handleResumeDecision("Yes, generate and download my resume.")}
+            onResumeOfferDecline={() => handleResumeDecision("No, I want to keep chatting.")}
           />
 
           <AnimatePresence>

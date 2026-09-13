@@ -1703,15 +1703,54 @@ h3 {
 
 .chat-content {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.68rem;
 }
 
 .chat-line {
-  line-height: 1.7;
+  margin: 0;
+  line-height: 1.68;
+  color: var(--text);
 }
 
 .chat-line--bullet {
-  padding-left: 0.8rem;
+  display: grid;
+  grid-template-columns: 0.8rem 1fr;
+  gap: 0.35rem;
+  padding: 0.48rem 0.7rem;
+  border-left: 3px solid rgba(15, 111, 100, 0.28);
+  border-radius: 0 10px 10px 0;
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.chat-line--bullet span {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.chat-heading {
+  margin: 0.25rem 0 0;
+  color: var(--secondary);
+  font-family: "DM Serif Display", Georgia, serif;
+  font-size: 1.06rem;
+  line-height: 1.3;
+}
+
+.chat-completion-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid rgba(15, 111, 100, 0.16);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(15, 111, 100, 0.09), rgba(249, 115, 22, 0.08));
+}
+
+.chat-completion-panel p {
+  margin: 0;
+  color: var(--secondary);
+  font-weight: 700;
 }
 
 .chat-form {

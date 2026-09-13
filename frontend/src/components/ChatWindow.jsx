@@ -3,14 +3,35 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AiProcessingPanel, itemVariants, listVariants, motionTokens } from "./MotionSystem";
 
 function renderMessageContent(content) {
+  const formatInline = (value) =>
+    String(value)
+      .split(/(\*\*[^*]+\*\*)/g)
+      .filter(Boolean)
+      .map((part, index) =>
+        part.startsWith("**") && part.endsWith("**") ? <strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong> : part
+      );
+
   return String(content || "")
     .split("\n")
     .filter(Boolean)
     .map((line, index) => {
-      const isBullet = /^[-*]\s+/.test(line.trim()) || /^\d+\.\s+/.test(line.trim());
+      const trimmed = line.trim();
+      const isBullet = /^[-*]\s+/.test(trimmed) || /^\d+\.\s+/.test(trimmed);
+      const isHeading = /^\*\*[^*]+\*\*:?$/.test(trimmed) || /^#{1,3}\s+/.test(trimmed);
+      const visibleLine = trimmed.replace(/^#{1,3}\s+/, "").replace(/^[-*]\s+/, "");
+
+      if (isHeading) {
+        return (
+          <h3 key={`${line}-${index}`} className="chat-heading">
+            {formatInline(visibleLine.replace(/:$/, ""))}
+          </h3>
+        );
+      }
+
       return (
         <p key={`${line}-${index}`} className={isBullet ? "chat-line chat-line--bullet" : "chat-line"}>
-          {line}
+          {isBullet ? <span aria-hidden="true">•</span> : null}
+          {formatInline(visibleLine)}
         </p>
       );
     });
@@ -24,6 +45,10 @@ function ChatWindow({
   onInputChange,
   starterPrompts = [],
   onStarterSelect,
+  awaitingResumeDecision = false,
+  onFinishConversation,
+  onResumeOfferAccept,
+  onResumeOfferDecline,
 }) {
   return (
     <motion.section
@@ -79,6 +104,27 @@ function ChatWindow({
           ) : null}
         </AnimatePresence>
       </motion.div>
+      <div className="chat-completion-panel">
+        {awaitingResumeDecision ? (
+          <>
+            <p>Ready to turn this conversation into your resume?</p>
+            <div className="inline-actions">
+              <button type="button" className="primary-button" onClick={onResumeOfferAccept} disabled={pending}>
+                <Sparkles size={17} aria-hidden="true" />
+                Yes, generate & download
+              </button>
+              <button type="button" className="secondary-button" onClick={onResumeOfferDecline} disabled={pending}>
+                Keep chatting
+              </button>
+            </div>
+          </>
+        ) : (
+          <button type="button" className="secondary-button" onClick={onFinishConversation} disabled={pending}>
+            <Sparkles size={17} aria-hidden="true" />
+            Finish chat & create resume
+          </button>
+        )}
+      </div>
       <form className="chat-form" onSubmit={onSubmit}>
         <textarea
           name="message"

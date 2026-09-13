@@ -169,6 +169,11 @@ class ChatRequest(BaseModel):
         return value.strip()
 
 
+class ChatResumeBuildRequest(BaseModel):
+    history: list[ChatMessage] = Field(min_length=1)
+    resume_text: str | None = None
+
+
 class ChatResponse(BaseModel):
     answer: str
 
