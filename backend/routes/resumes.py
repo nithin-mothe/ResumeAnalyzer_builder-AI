@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, File, Header, Response, UploadFile
 from fastapi.responses import StreamingResponse
 
@@ -29,6 +31,7 @@ from utils.errors import AppError
 
 
 router = APIRouter(tags=["resumes"])
+logger = logging.getLogger(__name__)
 settings = get_settings()
 ai_engine = AIEngine(settings)
 resume_parser = ResumeParser(settings)
@@ -50,14 +53,24 @@ async def upload_resume(
     storage_path = None
     saved_resume_id = None
     if user_id and database.enabled:
-        storage_path = await database.upload_resume_file(user_id=user_id, filename=file.filename or "resume.pdf", file_bytes=file_bytes)
-        saved = await database.save_resume(
-            user_id=user_id,
-            title=file.filename or "Uploaded Resume",
-            content={"parsed_text": text, "filename": file.filename or "resume.pdf"},
-            storage_path=storage_path,
-        )
-        saved_resume_id = saved["id"]
+        # Saving is an enhancement for signed-in users; parsing must still work
+        # when Supabase storage or the database is temporarily unavailable.
+        try:
+            storage_path = await database.upload_resume_file(
+                user_id=user_id,
+                filename=file.filename or "resume.pdf",
+                file_bytes=file_bytes,
+            )
+            saved = await database.save_resume(
+                user_id=user_id,
+                title=file.filename or "Uploaded Resume",
+                content={"parsed_text": text, "filename": file.filename or "resume.pdf"},
+                storage_path=storage_path,
+            )
+            saved_resume_id = saved["id"]
+        except Exception:
+            logger.exception("Could not save uploaded resume for user %s", user_id)
+            storage_path = None
 
     return ResumeUploadResponse(
         filename=file.filename or "resume.pdf",
